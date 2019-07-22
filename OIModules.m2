@@ -15,22 +15,33 @@ newPackage( "OIModules",
 	{Name => "name5",
 	    Email => "email5"},
 	{Name => "name6",
-	    Email => "email6"},	   
+	    Email => "email6"}
 	},
     HomePage => "https://nathanfieldsteel.github.io",
     Headline => "A package for computations with OI-algebras and modules over OI-algebras",
     AuxiliaryFiles => false)
 
 export {
+    "OIObject"
     }
+
 
 ---------------
 -- New types --
 ---------------
 
+FiniteTotallyOrderedSet = new Type of VisibleList
+OrderPreservingInjectiveFunction = new Type of HashTable
+
 -----------------------
 -- Type constructors --
 -----------------------
+
+OIObject = method()
+
+OIObject ZZ := FiniteTotallyOrderedSet => n -> (
+    new FiniteTotallyOrderedSet from toList(1..n)
+    )
 
 beginDocumentation()
 
