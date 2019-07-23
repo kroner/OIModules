@@ -6,63 +6,98 @@ newPackage(
      HomePage => "",
      Authors => {
 	  },
-     PackageImports => {},
+     PackageImports => {"EquivariantGB"},
      DebuggingMode => true, --should be true while developing a package, 
      --   but false after it is done
      AuxiliaryFiles => false
      )
 
 export {
-
+    "Automaton",
+    "Word",
+    "word",
+    "RegularLanguage",
+    "automaton",
+    "transitionMatrix",
+    "wordAutomaton",
+    "commAutomaton",
+    "idealAutomaton",
+    "automatonHS"
      }
 
-protect \ { }
+protect \ {arrows, accepts, states, alphabet, initial, transitions}
 --Types
 Automaton = new Type of HashTable
+Word = new Type of List
+RegularLanguage = new Type of HashTable
 
 --Methods
+
+word = method()
+word(List) := L -> new Word from L
 
 -- New automaton with states indexed by snames, alphabet S, i the intial state and A the set of accept states.
 -- The arrows are not yet defined.
 automaton = method()
-automaton(List,List,Thing,List) := (S,statenames,i,Acc) -> (
-    lastst := last statenames;
-    arsHash := hashTable apply(S, s->(s=>lastst))
-    ars := hashTable toList apply(statenames, st->(st => new MutableHashTable from arsHash));
-    automaton(S,ars,i,Acc)
-    )
-automaton(List,ZZ,List) := (S,nstates,Acc) -> automaton(S,toList(0..nstates-1),0,Acc)
-automaton(List,HashTable,Thing,List) := (S,ars,i,Acc) -> (
-    sts := keys ars;
-    assert(ars#?i);
+automaton(List,List,HashTable,List) := (S,sts,ars,Acc) -> (
+    n := #sts;
+    L := for state in sts list (
+	starrows := new MutableHashTable from ars#state;
+	for l in S do if not starrows#?l then starrows#l = last sts;
+	state => new HashTable from starrows
+	);
+    ars = hashTable L;
+    Mats := arrowsToMatrices(S,sts,ars);
     new Automaton from {
 	alphabet => S, 
 	states => sts,
 	arrows => ars,
-	initial => i, 
+	transitions => Mats,
+	initial => first sts, 
 	accepts => set Acc
 	}
     )
+automaton(List,List,List,List) := (S,states,Mats,Acc) -> (
+    ars := matricesToArrows(S,states,Mats);
+    automaton(S,states,ars,Acc)
+    )
+automaton(List,ZZ,List,List) := (S,n,Mats,Acc) -> automaton(S,toList(0..n-1),Mats,Acc)
 
-sparseAutomaton = method()
-sparseAutomaton(List,ZZ,List,List) := (S,nstates,ars,Acc) -> (
-    A := automaton(S,nstates,Acc);
-    for arrow in ars do A.arrows#(ars#0)#(ars#1) = ars#2;
-    A
+-- transition matrix of automaton A for letter l
+arrowsToMatrices = method()
+arrowsToMatrices(List,List,HashTable) := (S,states,H) -> (
+    n := #states;
+    for l in S list (
+    	M := new MutableMatrix from map(ZZ^n,ZZ^n,0);
+    	for i from 0 to #states - 1 do (
+	    j := position(states, k->H#(states#i)#l === k);
+	    M_(j,i) = 1;
+	    );
+    	new Matrix from M
+	)
     )
 
-matrixAutomaton = method()
-matrixAutomaton(List,List,List) := (S,Mats,Acc) -> (
-    n := numcols first Mats;
-    A := automaton(S,n,Acc);
+matricesToArrows = method()
+matricesToArrows(List,List,List) := (S,states,Mats) -> (
+    HashList := apply(states, state->new MutableHashTable);
+    n := #states;
     for i from 0 to #S-1 do (
 	M := Mats#i;
 	for j from 0 to n-1 do (
+	    k := position(flatten entries M_{j}, e -> e!=0);
+	    (HashList#j)#(S#i) = k;
 	    );
-      
 	);
-    A
+    HashList = apply(n, j -> (states#j => new HashTable from HashList#j));
+    hashTable HashList
     )
+
+Automaton Word := (A,w) -> (
+    state := A.initial;
+    for l in w do state = A.arrows#state#l;
+    member(state,A.accepts)
+    )
+Automaton List := (A,L) -> A word L
 
 
 complement(Automaton) := A -> (
@@ -88,16 +123,12 @@ Automaton + Automaton := (A,B) -> (
     complement ((complement A) * (complement B))
     )
 
--- transition matrix of automaton A for letter l
+
 transitionMatrix = method()
 transitionMatrix(Automaton,Thing) := (A,l) -> (
-    M := new MutableMatrix from map(ZZ^(#A.states),ZZ^(#A.states),0);
-    for i from 0 to #A.states - 1 do (
-	j := position(A.states, k->A.arrows#(A.states#i)#l === k);
-	M_(j,i) = 1;
-	);
-    new Matrix from M
-    )
+    k := position(A.alphabet, m -> m===l);
+    A.transitions#k
+    ) 
 
 -- characteristic column vector of the initial state.
 initVect = A -> transpose matrix {toList apply(A.states, s->if s===A.initial then 1 else 0)}
@@ -109,17 +140,16 @@ acceptVect = A -> matrix {toList apply(A.states, s->if member(s,A.accepts) then 
 --  weights - a list of gradings of the letters in the alphabet
 -- Output:
 --  Hilbert series of the words not rejected by A
-automatonHS = (A,weights) -> (
+automatonHS = method()
+automatonHS(Automaton,List) := (A,weights) -> (
     k := #A.states;
     T := ring first weights;
-    M := apply(#A.alphabet, l->transitionMatrix(A,l));
+    M := apply(#A.alphabet, l->sub(transitionMatrix(A,l),T));
     v := sub(initVect A,T);
     u := sub(acceptVect A,T);
-    N := id_(T^k) - sum apply(#A.alphabet, i->(weights#i)*(M#i));
-    1 + first flatten entries (s*u*(inverse N)*v)
+    N := id_(T^k) - sum apply(#A.alphabet, i->(M#i)*(weights#i));
+    first flatten entries (u*(inverse N)*v)
     )
-
-
 
 -- OI-algebra Hilbert series methods
 
@@ -136,12 +166,12 @@ word = m -> (
 -- Automaton that rejects all standard form words of monomials that are
 -- Inc-multiples of the monomial corresponding to w.
 wordAutomaton = (w,S) -> (
-    A := newAutomaton((0..#w),S,0,{#w});
+    A := automaton(S,#w+1,toList(0..#w-1));
     lastrho := 0;
     for i from 0 to #w-1 do (
-	A.states#i#(w#i) = i+1;
+	A.arrows#i#(w#i) = i+1;
 	if w#i == 0 then lastrho = i+1
-	else A.states#i#0 = lastrho;
+	else A.arrows#i#0 = lastrho;
 	);
     A
     )
@@ -150,11 +180,11 @@ wordAutomaton = (w,S) -> (
 -- (A word is in standard form if it does not contain subword s_js_i for j > i > 0,
 -- with S = {s_0,s_1,...,s_k}.)
 commAutomaton = S -> (
-    A := automaton((0..#S-1),S,0,{#S-1});
+    A := automaton(S,#S,toList(0..#S-2));
     for i from 0 to #S-2 do (
-	A.states#i#0 = 0;
+	A.arrows#i#0 = 0;
 	for l from 0 to #S-2 do
-	    A.states#i#(l+1) = if l < i then #S-1 else l;
+	    A.arrows#i#(l+1) = if l < i then #S-1 else l;
 	);
     A
     )
@@ -191,18 +221,13 @@ eHilbertSeries = F -> (
 beginDocumentation()
 
 doc ///
-     Key
-          RegularLanguages
-     Headline
-          A package for regular languages and their Hilbert series
-     Description
-          Text
-	       
-	  Example
-	       
-	  Text
-	       
-     Subnodes
+    Key
+        RegularLanguages
+    Headline
+        A package for regular languages and their Hilbert series
+    Description
+        Text
+	    Do regular language stuff.
           
 ///
 
@@ -212,20 +237,26 @@ end
 ----------
 
 restart
-load "eHilbert.m2"
-needsPackage "EquivariantGB"
+installPackage "RegularLanguages"
+tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
+A = automaton({0,1},{0,1,2},tmats,{2})
+A(new Word from {0,1,0,0,1,0,1,0})
+A(new Word from {1,1})
+T = frac(QQ[s,t])
+automatonHS(A,{s,t})
 
+needsPackage "EquivariantGB"
 T = frac(QQ[s,t])
 S = {symbol x, symbol y}
 R = buildERing(S,{1,1},QQ,2) -- make a ring with 2 variable orbits, x,y
 f = y_1*x_0 - x_1*y_0 -- {f} is an EGB for 2x2 minors
 A = idealAutomaton {f}; -- A rejects monomials in the intial ideal of {f} and words not in standard form
-h = automatonHS(A,{s,t,t}) -- the shift operator gets weight s, and x,y both get weight t
+h = 1 + s*automatonHS(A,{s,t,t}) -- the shift operator gets weight s, and x,y both get weight t
 
 S = {symbol x}
 R = buildERing(S,{1},QQ,2)
 A = idealAutomaton {x_0^2,x_0*x_1};
-h = automatonHS(A,{s,t})
+h = 1 + s*automatonHS(A,{s,t})
 
 
 
