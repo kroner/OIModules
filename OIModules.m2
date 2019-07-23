@@ -28,6 +28,7 @@ export {
     "makeOIAlgebra"
     }
 
+protect \ {widthList}
 
 ---------------
 -- New types --
@@ -110,6 +111,12 @@ OrderPreservingInjectiveFunction OrderPreservingInjectiveFunction := OrderPreser
 	}
     )
 
+-- compare morphisms in OI
+
+OrderPreservingInjectiveFunction ? OrderPreservingInjectiveFunction := (ep, tau) -> (
+    return symbol <
+    )
+
 OIHom = method()
 
 OIHom (FiniteTotallyOrderedSet, FiniteTotallyOrderedSet) := List => (ob1, ob2) -> (
@@ -127,7 +134,18 @@ makeOIAlgebra Ring := ConstantOIAlgebra => (K) -> (
     )
 
 net ConstantOIAlgebra := (A) -> (
-    net A#(symbol ring)
+    "The constant OI-algebra determined by "| net A#(symbol ring)
+    )
+
+ConstantOIAlgebra ^ List := OIModule => (A,l) -> (
+    new OIModule from {
+	symbol cache => hashTable{},
+	symbol numgens => length l,
+	symbol widthList => l
+	}
+    )
+
+OIModule FiniteTotallyOrderedSet := Module => (M,n) -> (    
     )
 
 beginDocumentation()
@@ -146,15 +164,6 @@ doc ///
 
 end
 
-restart
-installPackage "OIModules"
-
-ob1 = OIObject 3
-ob2 = OIObject 6
-OIHom(ob1, ob2)
-ep = OIMorphism {1,2,4}
-tau  = OIMorphism {1,3,5,8}
-
 -- operator precedece
 
 -- nets vs strings, printing in matrices
@@ -168,3 +177,20 @@ tau  = OIMorphism {1,3,5,8}
 -- conflicts between dictionaries
 
 -- some packages are symbols, some are packages
+
+-- net function so that the net of A=OIAlg(R) is just "A" (like rings)
+
+-- when to export overloaded binary / unary operators?
+
+-- how to get index of indexed variable
+
+restart
+installPackage "OIModules"
+
+ob1 = OIObject 3
+ob2 = OIObject 6
+OIHom(ob1, ob2)
+ep = OIMorphism({1,2,4})
+tau  = OIMorphism {1,3,5,8}
+
+A = makeOIAlgebra (ZZ/2)
