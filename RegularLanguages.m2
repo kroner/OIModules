@@ -48,6 +48,7 @@ automaton(List,List,HashTable,List) := (S,sts,ars,Acc) -> (
 	);
     ars = hashTable L;
     Mats := arrowsToMatrices(S,sts,ars);
+    Acc = toList((set sts)*(set Acc)); 
     new Automaton from {
 	alphabet => S, 
 	states => sts,
@@ -135,11 +136,7 @@ initVect = A -> transpose matrix {toList apply(A.states, s->if s===A.initial the
 -- characteristic row vector of the accept states.
 acceptVect = A -> matrix {toList apply(A.states, s->if member(s,A.accepts) then 1 else 0)}
 
--- Inputs:
---  A - an automaton
---  weights - a list of gradings of the letters in the alphabet
--- Output:
---  Hilbert series of the words not rejected by A
+
 automatonHS = method()
 automatonHS(Automaton,List) := (A,weights) -> (
     k := #A.states;
@@ -150,6 +147,29 @@ automatonHS(Automaton,List) := (A,weights) -> (
     N := id_(T^k) - sum apply(#A.alphabet, i->(M#i)*(weights#i));
     first flatten entries (u*(inverse N)*v)
     )
+
+-- remove unreachable states from an automaton
+trim Automaton := o -> A -> (
+    S := A.alphabet;
+    stateHash := new MutableHashTable from {A.initial => 0};
+    seen := new MutableHashTable from stateHash;
+    while #keys(stateHash) > 0 do (
+	state := first keys stateHash;
+	for l in S do (
+	    newState := A.arrows#state#l;
+	    if seen#?newState then continue;
+	    stateHash#newState = 0;
+	    seen#newState = 0;
+	    );
+	remove(stateHash,state);
+	);
+    remove(seen,A.initial);
+    sts := {A.initial}|(keys seen);
+    automaton(S,sts,A.arrows,toList A.accepts)
+    )
+    
+	    
+
 
 -- OI-algebra Hilbert series methods
 
@@ -239,11 +259,15 @@ end
 restart
 installPackage "RegularLanguages"
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
-A = automaton({0,1},{0,1,2},tmats,{2})
+A = automaton({0,1},3,tmats,{2})
 A(new Word from {0,1,0,0,1,0,1,0})
 A(new Word from {1,1})
 T = frac(QQ[s,t])
 automatonHS(A,{s,t})
+
+tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
+A = automaton({0,1},3,tmats,{1,2})
+trim A
 
 needsPackage "EquivariantGB"
 T = frac(QQ[s,t])
