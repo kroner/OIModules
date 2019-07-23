@@ -114,7 +114,17 @@ OrderPreservingInjectiveFunction OrderPreservingInjectiveFunction := OrderPreser
 -- compare morphisms in OI
 
 OrderPreservingInjectiveFunction ? OrderPreservingInjectiveFunction := (ep, tau) -> (
-    return symbol <
+    if source ep != source tau then (
+	symbol incomparable
+	)
+    else (
+	if (target ep != target tau) then (
+	    length target ep ? length target tau
+	    )
+	else (
+	    ep#(symbol values) ? tau#(symbol values)
+	    )
+	)
     )
 
 OIHom = method()
@@ -139,7 +149,7 @@ net ConstantOIAlgebra := (A) -> (
 
 ConstantOIAlgebra ^ List := OIModule => (A,l) -> (
     new OIModule from {
-	symbol cache => hashTable{},
+	symbol cache => new MutableHashTable from {},
 	symbol numgens => length l,
 	symbol widthList => l
 	}
@@ -168,8 +178,6 @@ end
 
 -- nets vs strings, printing in matrices
 
--- hashtable keys in package (symbol, string, etc)
-
 -- coherence w/ type system, class vs parent
 
 -- controlling precedence of operators
@@ -182,7 +190,7 @@ end
 
 -- when to export overloaded binary / unary operators?
 
--- how to get index of indexed variable
+-- diff between methodFunction and FunctionClosure
 
 restart
 installPackage "OIModules"
