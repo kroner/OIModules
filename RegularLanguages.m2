@@ -15,81 +15,89 @@ newPackage(
 export {
     "Automaton",
     "Word",
+    "word",
+    "RegularLanguage",
     "automaton",
-    "sparseAutomaton",
-    "matrixAutomaton",
-    "setArrows",
+    "transitionMatrix",
     "wordAutomaton",
     "commAutomaton",
     "idealAutomaton",
     "automatonHS"
      }
 
-protect \ {arrows, accepts, states, alphabet, initial}
+protect \ {arrows, accepts, states, alphabet, initial, transitions}
 --Types
 Automaton = new Type of HashTable
 Word = new Type of List
+RegularLanguage = new Type of HashTable
 
 --Methods
+
+word = method()
+word(List) := L -> new Word from L
 
 -- New automaton with states indexed by snames, alphabet S, i the intial state and A the set of accept states.
 -- The arrows are not yet defined.
 automaton = method()
-automaton(List,List,Thing,List) := (S,statenames,i,Acc) -> (
-    lastst := last statenames;
-    arsHash := hashTable apply(S, s->(s=>lastst));
-    ars := hashTable toList apply(statenames, st->(st => new MutableHashTable from arsHash));
-    automaton(S,ars,i,Acc)
-    )
-automaton(List,ZZ,List) := (S,nstates,Acc) -> automaton(S,toList(0..nstates-1),0,Acc)
-automaton(List,HashTable,Thing,List) := (S,ars,i,Acc) -> (
-    sts := keys ars;
-    assert(ars#?i);
+automaton(List,List,HashTable,List) := (S,sts,ars,Acc) -> (
+    n := #sts;
+    L := for state in sts list (
+	starrows := new MutableHashTable from ars#state;
+	for l in S do if not starrows#?l then starrows#l = last sts;
+	state => new HashTable from starrows
+	);
+    ars = hashTable L;
+    Mats := arrowsToMatrices(S,sts,ars);
     new Automaton from {
 	alphabet => S, 
 	states => sts,
 	arrows => ars,
-	initial => i, 
+	transitions => Mats,
+	initial => first sts, 
 	accepts => set Acc
 	}
     )
+automaton(List,List,List,List) := (S,states,Mats,Acc) -> (
+    ars := matricesToArrows(S,states,Mats);
+    automaton(S,states,ars,Acc)
+    )
+automaton(List,ZZ,List,List) := (S,n,Mats,Acc) -> automaton(S,toList(0..n-1),Mats,Acc)
 
-sparseAutomaton = method()
-sparseAutomaton(List,ZZ,List,List) := (S,nstates,ars,Acc) -> (
-    A := automaton(S,nstates,Acc);
-    for arrow in ars do A.arrows#(ars#1)#(ars#0) = ars#2;
-    A
+-- transition matrix of automaton A for letter l
+arrowsToMatrices = method()
+arrowsToMatrices(List,List,HashTable) := (S,states,H) -> (
+    n := #states;
+    for l in S list (
+    	M := new MutableMatrix from map(ZZ^n,ZZ^n,0);
+    	for i from 0 to #states - 1 do (
+	    j := position(states, k->H#(states#i)#l === k);
+	    M_(j,i) = 1;
+	    );
+    	new Matrix from M
+	)
     )
 
-matrixAutomaton = method()
-matrixAutomaton(List,List,List) := (S,Mats,Acc) -> (
-    n := numcols first Mats;
-    A := automaton(S,n,Acc);
-    setArrows(A,Mats)
-    )
-
-setArrows = method()
-setArrows(Automaton,List) := (A,L) -> (
-    S := A.alphabet;
-    n := #A.states;
-        for i from 0 to #S-1 do (
-	M := L#i;
+matricesToArrows = method()
+matricesToArrows(List,List,List) := (S,states,Mats) -> (
+    HashList := apply(states, state->new MutableHashTable);
+    n := #states;
+    for i from 0 to #S-1 do (
+	M := Mats#i;
 	for j from 0 to n-1 do (
 	    k := position(flatten entries M_{j}, e -> e!=0);
-	    A.arrows#j#i = k;
+	    (HashList#j)#(S#i) = k;
 	    );
 	);
-    A
+    HashList = apply(n, j -> (states#j => new HashTable from HashList#j));
+    hashTable HashList
     )
-setArrows(Automaton,HashTable) := (A,H) -> (
-    )
-
 
 Automaton Word := (A,w) -> (
     state := A.initial;
     for l in w do state = A.arrows#state#l;
     member(state,A.accepts)
     )
+Automaton List := (A,L) -> A word L
 
 
 complement(Automaton) := A -> (
@@ -115,16 +123,12 @@ Automaton + Automaton := (A,B) -> (
     complement ((complement A) * (complement B))
     )
 
--- transition matrix of automaton A for letter l
+
 transitionMatrix = method()
 transitionMatrix(Automaton,Thing) := (A,l) -> (
-    M := new MutableMatrix from map(ZZ^(#A.states),ZZ^(#A.states),0);
-    for i from 0 to #A.states - 1 do (
-	j := position(A.states, k->A.arrows#(A.states#i)#l === k);
-	M_(j,i) = 1;
-	);
-    new Matrix from M
-    )
+    k := position(A.alphabet, m -> m===l);
+    A.transitions#k
+    ) 
 
 -- characteristic column vector of the initial state.
 initVect = A -> transpose matrix {toList apply(A.states, s->if s===A.initial then 1 else 0)}
@@ -146,8 +150,6 @@ automatonHS(Automaton,List) := (A,weights) -> (
     N := id_(T^k) - sum apply(#A.alphabet, i->(M#i)*(weights#i));
     first flatten entries (u*(inverse N)*v)
     )
-
-
 
 -- OI-algebra Hilbert series methods
 
@@ -219,13 +221,13 @@ eHilbertSeries = F -> (
 beginDocumentation()
 
 doc ///
-     Key
-          RegularLanguages
-     Headline
-          A package for regular languages and their Hilbert series
-     Description
-	       
-     Subnodes
+    Key
+        RegularLanguages
+    Headline
+        A package for regular languages and their Hilbert series
+    Description
+        Text
+	    Do regular language stuff.
           
 ///
 
@@ -235,12 +237,13 @@ end
 ----------
 
 restart
-needsPackage "RegularLanguages"
-A = automaton({0,1},3,{2})
-tmats = {matrix{{1,1,1},{0,0,0},{0,0,0}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
-setArrows(A,tmats)
+installPackage "RegularLanguages"
+tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
+A = automaton({0,1},{0,1,2},tmats,{2})
 A(new Word from {0,1,0,0,1,0,1,0})
 A(new Word from {1,1})
+T = frac(QQ[s,t])
+automatonHS(A,{s,t})
 
 needsPackage "EquivariantGB"
 T = frac(QQ[s,t])
