@@ -20,6 +20,8 @@ export {
     "automaton",
     "transitionMatrix",
     "wordAutomaton",
+    "monomialAutomaton",
+    "monomialToWord",
     "commAutomaton",
     "idealAutomaton",
     "automatonHS"
@@ -42,7 +44,7 @@ automaton = method()
 automaton(List,List,HashTable,List) := (S,sts,ars,Acc) -> (
     n := #sts;
     L := for state in sts list (
-	starrows := new MutableHashTable from ars#state;
+	starrows := if ars#?state then new MutableHashTable from ars#state else new MutableHashTable;
 	for l in S do if not starrows#?l then starrows#l = last sts;
 	state => new HashTable from starrows
 	);
@@ -98,7 +100,7 @@ Automaton Word := (A,w) -> (
     for l in w do state = A.arrows#state#l;
     member(state,A.accepts)
     )
-Automaton List := (A,L) -> A word L
+Automaton List := (A,L) -> A (word L)
 
 
 complement(Automaton) := A -> (
@@ -107,9 +109,7 @@ complement(Automaton) := A -> (
     new Automaton from H
     )
 
-
--- automaton that rejects if either A or B would reject.  All reject states are combined to one terminal reject state.
-Automaton * Automaton := (A,B) -> (
+intersect(Automaton,Automaton) := (A,B) -> (
     S := A.alphabet;
     sts := flatten for a in A.states list for b in B.states list (a,b);
     Acc := flatten for a in toList A.accepts list for b in toList B.accepts list (a,b);
@@ -120,10 +120,10 @@ Automaton * Automaton := (A,B) -> (
     C
     )
 
-Automaton + Automaton := (A,B) -> (
+union = method()
+union(Automaton,Automaton) := (A,B) -> (
     complement ((complement A) * (complement B))
     )
-
 
 transitionMatrix = method()
 transitionMatrix(Automaton,Thing) := (A,l) -> (
@@ -167,15 +167,22 @@ trim Automaton := o -> A -> (
     sts := {A.initial}|(keys seen);
     automaton(S,sts,A.arrows,toList A.accepts)
     )
-    
-	    
+
+-- automaton that accepts only the word w
+wordAutomaton = method()
+wordAutomaton(List,Word) := (S,w) -> (
+    n := #w;
+    hashs := apply(n, i-> i => hashTable{w#i => i+1});
+    arrows := hashTable hashs;
+    automaton(S,toList(0..n+1),arrows,{n-1})
+    )
 
 
 -- OI-algebra Hilbert series methods
 
 -- Minimal standard form word representation of monomail m.
 -- Outputs a list of integers, where 0 is the shift operator and 1,...,k are variable orbits.
-word = m -> (
+monomialToWord = m -> (
     M := exponentMatrix m;
     Mlist := entries transpose M;
     w := flatten for row in Mlist list (flatten toList apply(#row, i->toList(row#i:i+1)))|{0};
@@ -184,8 +191,9 @@ word = m -> (
     )
 
 -- Automaton that rejects all standard form words of monomials that are
--- Inc-multiples of the monomial corresponding to w.
-wordAutomaton = (w,S) -> (
+-- Inc-multiples of the monomial.
+monomialAutomaton = (m,S) -> (
+    w := monomialToWord m;
     A := automaton(S,#w+1,toList(0..#w-1));
     lastrho := 0;
     for i from 0 to #w-1 do (
@@ -217,7 +225,7 @@ idealAutomaton = F -> (
     k := numrows exponentMatrix first F;
     rho := symbol rho;
     S' := toList (0..k);
-    Afs := apply(F, f->wordAutomaton(word f, S'));
+    Afs := apply(F, f->wordAutomaton(monomialToWord f, S'));
     A := commAutomaton(S');
     for Af in Afs do A = A * Af;
     A
@@ -229,7 +237,7 @@ eHilbertSeries = F -> (
     k := numrows exponentMatrix first F;
     A := idealAutomaton F;
     weights := {s}|toList(k:t);
-    automatonHS(A,weights)
+    1 + s*automatonHS(A,weights)
     )
     
 
@@ -241,29 +249,88 @@ eHilbertSeries = F -> (
 beginDocumentation()
 
 doc ///
-    Key
-        RegularLanguages
-    Headline
-        A package for regular languages and their Hilbert series
-    Description
-        Text
-	    Do regular language stuff.
+     Key
+          RegularLanguages
+     Headline
+          A package for regular languages and their Hilbert series
+     Description
+          Text
+	       Do regular language stuff.
           
 ///
 
-
+doc ///
+     Key
+          automaton
+	  (automaton,List,List,HashTable,List)
+	  (automaton,List,List,List,List)
+	  (automaton,List,ZZ,List,List)
+     Headline
+          constructor for Automaton
+     Usage
+          A = automaton(S,states,arrows,accepts)
+	  A = automaton(S,states,Mats,accepts)
+	  A = automaton(S,n,Mats,accepts)
+     Inputs
+          S:List
+	       the alphabet
+	  states:List
+	       the names of the states
+	  n:ZZ
+	       the number of states
+	  arrows:HashTable
+	  Mats:List
+	       transition matrices
+	  accepts:List
+	       the accepting states
+     Outputs
+          A:Automaton
+     Description
+          Text
+	       Builds a finite state automaton over alphabet S.  The initial state is always
+	       the first one in the list of states.  The last arguement specifies the accepting
+	       states, and the rest are rejecting.  There are two main ways to specify the 
+	       arrows between states:
+	       
+	       The first way is as a HashTable of HashTables.  The keys
+	       of the HashTable are the states, and the values are HashTables that assign a
+	       state to each element of the alphabet.  Any missing arrows default to point
+	       to the last state.
+	       
+	       This example accepts words in the alphabet \{a,b\} that contain at least one b
+	  Example
+	       arrows0 = hashTable{a=>0,b=>1}
+	       arrows1 = hashTable{a=>1,b=>1}
+	       H = hashTable{0=>arrows0, 1=>arrows1};
+	       A = automaton({a,b},{0,1},H,{1})
+	       A {a,a,b,a}
+	  Text
+	       The second way is as a list of transition matrices, one for each element of
+	       the alphabet.  Each is a stochastic 0/1 matrix.  The matrix sends each standard
+	       basis vector for a state to the standard basis vector of the state it points to.
+	       
+	       This example accepts words in the alphabet \{a,b\} that contain two b's in a row.
+          Example
+               tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
+	       A = automaton({a,b},3,tmats,{2})
+	       A {a,b,a,a,b,a,b,a}
+	       A {b,b}
+///
 
 end
 ----------
 
 restart
 installPackage "RegularLanguages"
+viewHelp automaton
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
 A = automaton({0,1},3,tmats,{2})
 A(new Word from {0,1,0,0,1,0,1,0})
 A(new Word from {1,1})
 T = frac(QQ[s,t])
 automatonHS(A,{s,t})
+
+A = wordAutomaton({a,b}, word {a,a,b})
 
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
 A = automaton({0,1},3,tmats,{1,2})
@@ -286,7 +353,7 @@ h = 1 + s*automatonHS(A,{s,t})
 
 
 S = {symbol x, symbol y}
-w = word f
+w = monomialToWord f
 A1 = wordAutomaton(w,{rho}|S)
 B = commAutomaton({rho}|S)
 A = productAutomaton(A1,B)
@@ -295,5 +362,5 @@ S = {symbol x}
 R = buildERing(S,toList(#S:1),QQ,1)
 m = x_0^2
 exponentMatrix m
-w = word m
+w = monomialToWord m
 A = wordAutomaton(w,{rho}|S)
