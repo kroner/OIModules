@@ -223,6 +223,14 @@ OrderPreservingInjectiveFunction ? OrderPreservingInjectiveFunction := (ep, tau)
 	)
     )
 
+OrderPreservingInjectiveFunction == OrderPreservingInjectiveFunction := Boolean => (ep, tau) -> (
+    if (source ep == source tau and target ep == target tau and ep#(symbol values) == tau#(symbol values)) then (
+	true
+	) else (
+	false
+	)
+    )
+
 OIHom = method()
 
 OIHom (FiniteTotallyOrderedSet, FiniteTotallyOrderedSet) := List => (ob1, ob2) -> (
@@ -294,10 +302,32 @@ OIModule ZZ := Module => (M,n) -> (
     M OIObject n
     )
 
-OIModule OrderPreservingInjectiveFunction := (Matrix) => (M,epsilon) -> (
-    sourceModule := M source epsilon;
-    targetModule := M target epsilon;
-    random(targetModule, sourceModule)
+OIModule OrderPreservingInjectiveFunction := (Matrix) => (M,ep) -> (
+    sourceModule := M source ep;
+    targetModule := M target ep;
+    summandMatrices := M#widthList / (w -> inducedMorphism(ep,w));
+    integerMatrix := fold(summandMatrices, (a,b) -> a++b);
+    ringMatrix := sub(integerMatrix, (getOIAlgebra M).ring);
+    map(targetModule, sourceModule, ringMatrix)
+    )
+
+
+inducedMorphism = method()
+
+-- given a principle projective P_n and an OImorphism ep, the matrix for the induced map
+-- P_n(b) <- P_n(a) (here, ep is a morphisms from [a] to [b])
+
+inducedMorphism (OrderPreservingInjectiveFunction,ZZ) := Matrix => (ep,n) -> (
+    sourceBasis := sort OIHom(OIObject n, source ep);
+    targetBasis := sort OIHom(OIObject n, target ep);
+    matrixEntriesFunction := (i,j) -> (
+	if (ep sourceBasis_j == targetBasis_i) then (
+	    1
+	    ) else (
+	    0
+	    )
+	);
+    map(ZZ^(length targetBasis), ZZ^(length sourceBasis), matrixEntriesFunction)
     )
 
 getOIBasis = method()
@@ -399,28 +429,18 @@ naturalBasis / (e -> net e)
 restart
 installPackage "OIModules"
 
--- two objects in OI:
-
-ob1 = OIObject 3
-ob2 = OIObject 6
-
--- these look fine:
-
-tau  = OIMorphism {1,3,5,8}
-
--- toString (or net?) on a list of OI morphisms seems to work fine here:
-
-h = OIHom(ob1, ob2)
-
--- but:
-
 R = QQ[x,y]
 A = makeOIAlgebra (R)
 F = A^{1,2,4}
 
+tau  = OIMorphism {2,3,4}
+
+F tau
 -- you can look at the modules you get by applying F to the first few values:
 
-apply(10, i -> F i)
+testList := OIHom(4,5)
+
+apply(testList, i -> F i)
 
 -- or get a particular one:
 
