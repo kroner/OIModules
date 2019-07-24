@@ -129,7 +129,7 @@ net Automaton := A -> (
 
 complement(Automaton) := Automaton => A -> (
     H := new MutableHashTable from A;
-    H.accepts = set(keys A.states) - A.accepts;
+    H.accepts = set(A.states) - A.accepts;
     new Automaton from H
     )
 
@@ -538,6 +538,7 @@ B' {a,a,b,a,a,b}
 B' {a,a,b,b}
 automatonHS(B',{1,1})
 
+needsPackage "RegularLanguages"
 needsPackage "EquivariantGB"
 T = frac(QQ[s,t])
 S = {symbol x, symbol y}
