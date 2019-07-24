@@ -24,7 +24,8 @@ export {
     "monomialToWord",
     "commAutomaton",
     "idealAutomaton",
-    "automatonHS"
+    "automatonHS",
+    "NFA2DFA"
      }
 
 protect \ {arrows, accepts, states, alphabet, initial, transitions}
@@ -246,34 +247,37 @@ eHilbertSeries = F -> (
 -- to convert it into a Deterministic Finite Automaton (DFA)
 -- The states of the DFA are indexed by sets of states of the original automaton
 
--- Pre: 
-NFA2DFA(Automaton) = automaton -> (
+-- Pre:The NFA stores lists of states as targets. If it has a single target a, it stores
+-- the singleton {a}.
+NFA2DFA = method() 
+NFA2DFA(Automaton) := A -> (
     
     states := new MutableHashTable;
     arrows := new MutableHashTable;
     
-    frontier:= new MutableList from {{automaton#initial}};
+    frontier := { {first automaton#states}};
     while #frontier > 0  do (
 	  currentState := frontier#0;
 	  drop (frontier,1);
 	   
-	  starrows:= new MutableHashTable from automaton#arrows(frontier#0);
+	  starrows:= new MutableHashTable from A#arrows(frontier#0);
 	  
 	  for i to #keys(starrows) do (
 	     letter:= keys(starrows)#i;  
-	     stararrows#letter = unique 
-	     flatten apply(currentState,st -> automaton#arrows#letter);
+	     starrows#letter = unique flatten apply(currentState,st -> A#arrows#letter);
 	     
-	     if ( states?#(stararrows#letter) ) then (
+	     
+	     -- Check last is rejected state
+	     -- Make the list of accepted states
+	     if ( not states#?(starrows#letter) ) then (
 		 
-		 frontier = append(frontier,stararrows#letter);
-		 );
-		    
-	  );	   
-      ); 
-	     
-	
-	) 
+		 frontier = append(frontier,starrows#letter);
+		 );	    
+	     );
+	 arrows#currentState = starrows;	   
+      	 );
+      automaton(states,arrows,first states,last states)
+      
     )
 
 
@@ -354,6 +358,8 @@ end
 ----------
 
 restart
+
+loadPackage (RegularLanguages,Reload=>true)
 installPackage "RegularLanguages"
 viewHelp automaton
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
@@ -397,3 +403,28 @@ m = x_0^2
 exponentMatrix m
 w = monomialToWord m
 A = wordAutomaton(w,{rho}|S)
+
+
+S = {symbol a, symbol b}
+sts = toList ( 1..4)
+arrows1  = new HashTable from {a => {2},b=> {4}}
+arrows2 = new HashTable from {a => {2,3},b=> {2}}
+arrows3 = new HashTable from {a => {4},b=> {4}}
+arrows4 = new HashTable from {a => {4},b=> {4}}
+
+ars = new HashTable from {1 => arrows1,2 => arrows2,3 => arrows3,4 => arrows4}
+Acc = {3}
+
+A = automaton(S,states,arrows,accepted)
+--NFA have a problem constructing the matrices with the current implementation 
+
+A = new Automaton from {
+	alphabet => S, 
+	states => sts,
+	arrows => ars,
+	transitions => {},
+	initial => first sts, 
+	accepts => set Acc
+	}
+
+NFA2DFA A
