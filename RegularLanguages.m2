@@ -46,7 +46,7 @@ automaton = method()
 automaton(List,List,HashTable,List) := (S,sts,ars,Acc) -> (
     L := for state in sts list (
 	starrows := if ars#?state then new MutableHashTable from ars#state else new MutableHashTable;
-	for l in S do if not starrows#?l then starrows#l = last sts;
+	for l in S do if not starrows#?l then starrows#l = {last sts};
 	state => new HashTable from starrows
 	);
     ars = hashTable L;
