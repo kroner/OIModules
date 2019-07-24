@@ -80,9 +80,8 @@ arrowsToMatrices(List,List,HashTable) := (S,states,H) -> (
     n := #states;
     for l in S list (
     	M := new MutableMatrix from map(ZZ^n,ZZ^n,0);
-    	for i from 0 to #states - 1 do (
-	    j := position(states, k->H#(states#i)#l === k);
-	    M_(j,i) = 1;
+    	for j from 0 to n-1 do for i from 0 to n-1 do (
+	    if member(i, H#(states#j)#l) then M_(i,j) = 1;
 	    );
     	new Matrix from M
 	)
@@ -92,11 +91,11 @@ matricesToArrows = method()
 matricesToArrows(List,List,List) := (S,states,Mats) -> (
     HashList := apply(states, state->new MutableHashTable);
     n := #states;
-    for i from 0 to #S-1 do (
-	M := Mats#i;
+    for l from 0 to #S-1 do (
+	M := Mats#l;
 	for j from 0 to n-1 do (
-	    k := position(flatten entries M_{j}, e -> e!=0);
-	    (HashList#j)#(S#i) = k;
+	    is := select(n, i-> M_(i,j) != 0);
+	    (HashList#j)#(S#l) = is;
 	    );
 	);
     HashList = apply(n, j -> (states#j => new HashTable from HashList#j));
@@ -104,9 +103,9 @@ matricesToArrows(List,List,List) := (S,states,Mats) -> (
     )
 
 Automaton Word := (A,w) -> (
-    state := A.initial;
-    for l in w do state = A.arrows#state#l;
-    member(state,A.accepts)
+    v := initVect(A);
+    for l in w do v = transitionMatrix(A,l)*v;
+    (acceptVect(A)*v)_(0,0) != 0
     )
 Automaton List := (A,L) -> A (word L)
 
@@ -139,7 +138,6 @@ cat(Automaton,Automaton) := (A,B) -> (
     n := #A.states;
     m := #B.states;
     Mats := for l from 0 to #S-1 list (
-	print initVect A;
 	C := ((B.transitions#l)_{0})*(acceptVect A);
 	matrix{{A.transitions#l, map(ZZ^n,ZZ^m,0)},{C, B.transitions#l}}
 	);
@@ -194,7 +192,7 @@ trim Automaton := o -> A -> (
 wordAutomaton = method()
 wordAutomaton(List,Word) := (S,w) -> (
     n := #w;
-    hashs := apply(n, i-> i => hashTable{w#i => i+1});
+    hashs := apply(n, i-> i => hashTable{w#i => {i+1}});
     arrows := hashTable hashs;
     automaton(S,toList(0..n+1),arrows,{n-1})
     )
@@ -321,8 +319,8 @@ doc ///
 	       
 	       This example accepts words in the alphabet \{a,b\} that contain at least one b
 	  Example
-	       arrows0 = hashTable{a=>0,b=>1}
-	       arrows1 = hashTable{a=>1,b=>1}
+	       arrows0 = hashTable{a=>{0},b=>{1}}
+	       arrows1 = hashTable{a=>{1},b=>{1}}
 	       H = hashTable{0=>arrows0, 1=>arrows1};
 	       A = automaton({a,b},{0,1},H,{1})
 	       A {a,a,b,a}
