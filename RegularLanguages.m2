@@ -21,6 +21,7 @@ export {
     "transitionMatrix",
     "kleeneStar",
     "wordAutomaton",
+    "setAutomaton",
     "monomialAutomaton",
     "monomialToWord",
     "commAutomaton",
@@ -210,7 +211,17 @@ wordAutomaton(List,Word) := (S,w) -> (
     automaton(S,toList(0..n+1),arrows,{n})
     )
 
-
+-- automaton that accepts any letter of the input set
+-- it is equivalent to the regular expression {a,b,...,n}
+setAutomaton = method()
+setAutomaton(List) :=(S) -> (
+    
+    sts := toList (0..#S+1);
+    hash := apply(#S,i->i => hashTable{S#i =>{i+1}});
+    ars:= hashTable hash;
+    acc:= toList (1..#S);
+    automaton(S,sts,ars,acc)  
+    )
 
 ----------------------------------------------------------------------------------------------
 -- OI-algebra Hilbert series methods
@@ -468,3 +479,6 @@ A = new Automaton from {
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
 A = automaton({0,1},3,tmats,{1,2})
 NFA2DFA A
+
+S = {0,1,2,3,4}
+setAutomaton(S)
