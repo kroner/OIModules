@@ -47,8 +47,8 @@ word(List) := L -> new Word from L
 -- New automaton with states indexed by snames, alphabet S, i the intial state and A the set of accept states.
 -- The arrows are not yet defined.
 automaton = method()
-automaton(List,List,HashTable,Set) := (S,sts,ars,Acc) -> automaton(S,sts,ars,toList Acc)
-automaton(List,List,HashTable,List) := (S,sts,ars,Acc) -> (
+automaton(List,List,HashTable,Set) := Automaton => (S,sts,ars,Acc) -> automaton(S,sts,ars,toList Acc)
+automaton(List,List,HashTable,List) := Automaton => (S,sts,ars,Acc) -> (
     L := for state in sts list (
 	starrows := if ars#?state then new MutableHashTable from ars#state else new MutableHashTable;
 	for l in S do if not starrows#?l then starrows#l = {last sts};
@@ -66,8 +66,8 @@ automaton(List,List,HashTable,List) := (S,sts,ars,Acc) -> (
 	accepts => set Acc
 	}
     )
-automaton(List,List,List,Set) := (S,sts,Mats,Acc) -> automaton(S,sts,Mats,toList Acc)
-automaton(List,List,List,List) := (S,sts,Mats,Acc) -> (
+automaton(List,List,List,Set) := Automaton => (S,sts,Mats,Acc) -> automaton(S,sts,Mats,toList Acc)
+automaton(List,List,List,List) := Automaton => (S,sts,Mats,Acc) -> (
     ars := matricesToArrows(S,sts,Mats);
     Acc = toList((set sts)*(set Acc)); 
     new Automaton from {
@@ -79,8 +79,8 @@ automaton(List,List,List,List) := (S,sts,Mats,Acc) -> (
 	accepts => set Acc
 	}
     )
-automaton(List,ZZ,List,Set) := (S,n,Mats,Acc) -> automaton(S,n,Mats,toList Acc)
-automaton(List,ZZ,List,List) := (S,n,Mats,Acc) -> automaton(S,toList(0..n-1),Mats,Acc)
+automaton(List,ZZ,List,Set) := Automaton => (S,n,Mats,Acc) -> automaton(S,n,Mats,toList Acc)
+automaton(List,ZZ,List,List) := Automaton => (S,n,Mats,Acc) -> automaton(S,toList(0..n-1),Mats,Acc)
 
 
 -- transition matrix of automaton A for letter l
@@ -119,13 +119,13 @@ Automaton Word := (A,w) -> (
 Automaton List := (A,L) -> A (word L)
 
 
-complement(Automaton) := A -> (
+complement(Automaton) := Automaton => A -> (
     H := new MutableHashTable from A;
     H.accepts = set(keys A.states) - A.accepts;
     new Automaton from H
     )
 
-intersect(Automaton,Automaton) := (A,B) -> (
+intersect(Automaton,Automaton) := Automaton => (A,B) -> (
     S := A.alphabet;
     sts := flatten for a in A.states list for b in B.states list (a,b);
     Acc := flatten for a in toList A.accepts list for b in toList B.accepts list (a,b);
@@ -137,12 +137,12 @@ intersect(Automaton,Automaton) := (A,B) -> (
     )
 
 union = method()
-union(Automaton,Automaton) := (A,B) -> (
+union(Automaton,Automaton) := Automaton => (A,B) -> (
     complement ((complement A) * (complement B))
     )
 
 cat = method()
-cat(Automaton,Automaton) := (A,B) -> (
+cat(Automaton,Automaton) := Automaton => (A,B) -> (
     S := A.alphabet;
     n := #A.states;
     m := #B.states;
@@ -155,10 +155,10 @@ cat(Automaton,Automaton) := (A,B) -> (
     )
 
 kleeneStar = method()
-kleeneStar(Automaton) := A -> (
+kleeneStar(Automaton) := Automaton => A -> (
     S := A.alphabet;
     Mats := for l from 0 to #S-1 list A.transitions#l + ((A.transitions#l)_{0})*(acceptVect A);
-    automaton(S,A.states,Mats,A.accepts)
+    automaton(S,A.states,Mats,{A.initial}|(toList A.accepts))
     )
 
 transitionMatrix = method()
@@ -356,11 +356,25 @@ doc ///
           
 ///
 
+
+doc ///
+     Key
+          Automaton
+     Headline
+          the class of finite state automata
+     Description
+          Text
+	       Can represent a deterministic or nondeterinistic automaton.
+///
+
 doc ///
      Key
           automaton
+	  (automaton,List,List,HashTable,Set)
 	  (automaton,List,List,HashTable,List)
+	  (automaton,List,List,List,Set)
 	  (automaton,List,List,List,List)
+	  (automaton,List,ZZ,List,Set)
 	  (automaton,List,ZZ,List,List)
      Headline
           constructor for Automaton
