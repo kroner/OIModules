@@ -25,11 +25,16 @@ export {
     "OIObject",
     "OIMorphism",
     "OIHom",
+    "MaxOIMon",
     "OIMontoHilbert",
     "isOIMonomial",
+    "OIDivides",
+    "OIDivider",
     "makeOIAlgebra",
+    "OICleaner",
     "OIElement",
-    "OIMonomials"
+    "OIMonomials",
+    "OIDivisionAlgorithm",
     "getOIBasis"
     }
 
@@ -55,6 +60,12 @@ OIElement = method()
 OIElement HashTable := OIModuleElement => H ->(
     new OIModuleElement from H)
 
+OICleaner = m ->(
+    templist :={};
+    for i in keys m do(
+	if m#i !=0 then templist = append(templist,{i,m#i}));
+    return OIElement(hashTable(templist)))
+
 OIMonomials = method()
 OIMonomials OIModuleElement := List => H -> keys H
 OIModuleElement + OIModuleElement := (a,b) ->(
@@ -65,16 +76,100 @@ OIModuleElement + OIModuleElement := (a,b) ->(
     for j in OIMonomials b do(
 	if not a#?j then temp = append(temp,{j,b#j}));
     temphash := new HashTable from temp;
-    return OIElement temphash)
+    return OICleaner(OIElement temphash))
     
-ZZ*OIModuleElement := (a,b) -> (HOIElement(hashTable(for i in keys b list {i,a*b#i})))
-QQ*OIModuleElement := (a,b) -> (HOIElement(hashTable(for i in keys b list {i,a*b#i})))
-RingElement*OIModuleElement := (a,b) -> (HOIElement(hashTable(for i in keys b list {i,a*b#i})))
+ZZ*OIModuleElement := (a,b) -> (OIElement(hashTable(for i in keys b list {i,a*b#i})))
+QQ*OIModuleElement := (a,b) -> (OIElement(hashTable(for i in keys b list {i,a*b#i})))
+RingElement*OIModuleElement := (a,b) -> (OIElement(hashTable(for i in keys b list {i,a*b#i})))
 
 OIModuleElement - OIModuleElement := (a,b) -> a+((-1)*b)
 
+OIDivides = (a,b) ->(
+    if #(source a)!= #(source b) then( 
+    return false)
+    else if b(1) < a(1) then( 
+	return false)
+    else(
+	tempbool:=true;
+	for i from 1 to (#(source b)-1) do(
+	    if b(i+1)-b(i) < a(i+1)-a(i) then(
+		tempbool = false));
+	if #(target b) - b(#source b) < #(target a) - a(#source a) then tempbool = false;
+	return tempbool))
 
+OIDivider = (a,b) ->(
+    assert(OIDivides(a,b));
+    temptarget := #(target b);
+    tempfull := toList(1..temptarget);
+    templist := {};
+    tempbig:={};
+    tempsource :=toList(1..#(source a));
+    for i from 1 to #(source a) do(
+	templist = append(templist,{a(i),b(i)});
+	tempfull = delete(b(i),tempfull);
+	tempsource = delete(a(i),tempsource));
+    temphash:= hashTable(templist);
+    for i in tempsource do(
+	if i==1 then templist = append(templist,{i,tempfull_0})
+	else(
+	    tempbig={};
+	    for j in tempfull do(
+		if j>temphash#(i-1) then tempbig = append(tempbig,j));
+	    templist = append(templist,{i,tempbig_0}));
+	temphash = hashTable templist);
+    tempmorph := for i in keys temphash list temphash#i;
+    return OIMorphism(tempmorph,temptarget))
+    
 
+OrderPreservingInjectiveFunction*OIModuleElement := (a,b) ->(
+    temp:={};
+    for i in keys b do(
+	temp = append(temp,{a i,b#i}));
+    return OIElement(hashTable(temp)))
+MaxOIMon = L ->(
+    temp :=L_0;
+    for i in L do if i>temp then temp = i;
+    return temp)	
+
+OIInitial = m -> MaxOIMon OIMonomials m
+
+ 
+OIDivisionAlgorithm = (m,L) ->(
+    tempbool := false;
+    init:=0;
+    dummy:=m;
+    divider :=0;
+    remain := 0;
+    templist:={};
+    initialL := for i in L list {i,OIInitial i};
+    for i in initialL when (not tempbool) do(
+	for k in (keys m) when (not tempbool) do(
+	    if OIDivides(i_1,k) then tempbool = true));
+    while tempbool == true and #(keys dummy)>0 do(
+	templist={};
+	for k in keys dummy do(
+	    for i in initialL do(
+		if OIDivides(i_1,k) then templist=append(templist,k)));
+	init=MaxOIMon templist;
+	for i in initialL do(
+	    if OIDivides(i_1,init) then(
+		divider = i_0;
+		break));
+--	print("COEFFICIENT",dummy#init/divider#(OIInitial divider));
+--	print("DIVIDED",(OIDivider(OIInitial(divider),init))*divider);
+--	print("FIRST",OIDivider(OIInitial(divider),init));
+--	print("OIINITDIVIDER",OIInitial(divider),source OIInitial(divider),target OIInitial(divider) );
+--	print("INIT",init,source init,target init);
+--	print(dummy#init/divider#(OIInitial divider))*(OIDivider(OIInitial divider,init)*divider);
+	dummy = dummy - (dummy#init/divider#(OIInitial divider))*(OIDivider(OIInitial divider,init)*divider);
+        print("DUMMY",dummy);
+	tempbool = false;
+	for i in initialL when (not tempbool) do(
+	    for k in (keys dummy) when (not tempbool) do(
+	        if OIDivides(i_1,k) then tempbool = true));	
+	);
+    return dummy)
+    
 
 
 -- constructor for OIElements
