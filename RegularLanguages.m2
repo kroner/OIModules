@@ -214,7 +214,7 @@ wordAutomaton(List,Word) := (S,w) -> (
 
 
 elementToWord = method()
-elementToWord OIElement := e -> (
+elementToWord OIModuleElement := e -> (
     n := source e;
     m := target e;
     k := 1;
