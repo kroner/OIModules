@@ -170,6 +170,7 @@ cat(Automaton,Automaton) := Automaton => (A,B) -> (
 	matrix{{A.transitions#l, map(ZZ^n,ZZ^m,0)},{C, B.transitions#l}}
 	);
     Acc := apply(toList B.accepts, state->n+position(B.states,st->st===state));
+    if member(B.initial, B.accepts) then Acc = Acc|(toList A.accepts);
     automaton(S,n+m,Mats,Acc)
     )
 
@@ -721,9 +722,9 @@ B' {a,a,b,a,a,b}
 B' {a,a,b,b}
 automatonHS(B',{1,1})
 
-A = wordAutomaton({a,b}, word {a})
-B = union(wordAutomaton({a,b},word {b}),A)
-kleeneStar
+A = wordAutomaton({1},word{1})
+B = kleeneStar A
+C = cat(A,B)
 
 
 needsPackage "RegularLanguages"
