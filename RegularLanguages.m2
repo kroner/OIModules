@@ -24,7 +24,8 @@ export {
     "monomialToWord",
     "commAutomaton",
     "idealAutomaton",
-    "automatonHS"
+    "automatonHS",
+    "cat"
      }
 
 protect \ {arrows, accepts, states, alphabet, initial, transitions}
@@ -42,7 +43,6 @@ word(List) := L -> new Word from L
 -- The arrows are not yet defined.
 automaton = method()
 automaton(List,List,HashTable,List) := (S,sts,ars,Acc) -> (
-    n := #sts;
     L := for state in sts list (
 	starrows := if ars#?state then new MutableHashTable from ars#state else new MutableHashTable;
 	for l in S do if not starrows#?l then starrows#l = last sts;
@@ -60,9 +60,17 @@ automaton(List,List,HashTable,List) := (S,sts,ars,Acc) -> (
 	accepts => set Acc
 	}
     )
-automaton(List,List,List,List) := (S,states,Mats,Acc) -> (
-    ars := matricesToArrows(S,states,Mats);
-    automaton(S,states,ars,Acc)
+automaton(List,List,List,List) := (S,sts,Mats,Acc) -> (
+    ars := matricesToArrows(S,sts,Mats);
+    Acc = toList((set sts)*(set Acc)); 
+    new Automaton from {
+	alphabet => S, 
+	states => sts,
+	arrows => ars,
+	transitions => Mats,
+	initial => first sts, 
+	accepts => set Acc
+	}
     )
 automaton(List,ZZ,List,List) := (S,n,Mats,Acc) -> automaton(S,toList(0..n-1),Mats,Acc)
 
@@ -123,6 +131,20 @@ intersect(Automaton,Automaton) := (A,B) -> (
 union = method()
 union(Automaton,Automaton) := (A,B) -> (
     complement ((complement A) * (complement B))
+    )
+
+cat = method()
+cat(Automaton,Automaton) := (A,B) -> (
+    S := A.alphabet;
+    n := #A.states;
+    m := #B.states;
+    Mats := for l from 0 to #S-1 list (
+	print initVect A;
+	C := ((B.transitions#l)_{0})*(acceptVect A);
+	matrix{{A.transitions#l, map(ZZ^n,ZZ^m,0)},{C, B.transitions#l}}
+	);
+    Acc := apply(toList B.accepts, state->n+position(B.states,st->st===state));
+    automaton(S,n+m,Mats,Acc)
     )
 
 transitionMatrix = method()
@@ -322,14 +344,13 @@ end
 
 restart
 installPackage "RegularLanguages"
-viewHelp automaton
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
 A = automaton({0,1},3,tmats,{2})
 A(new Word from {0,1,0,0,1,0,1,0})
 A(new Word from {1,1})
-T = frac(QQ[s,t])
-automatonHS(A,{s,t})
-
+B = cat(A,A)
+B {0,1,1,1,1}
+B {0,1,1,1}
 A = wordAutomaton({a,b}, word {a,a,b})
 
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
