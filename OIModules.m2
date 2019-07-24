@@ -34,10 +34,12 @@ export {
     "makeOIAlgebra",
     "getOIBasis",
     "getOIAlgebra",
-    "getWidthList"
+    "getWidthList",
+    "OIMap",
+    "getImageGensList"
     }
 
-protect \ {widthList,OIAlgebra,OIBasis}
+protect \ {widthList,OIAlgebra,OIBasis,imageGensList}
 
 ---------------
 -- New types --
@@ -47,7 +49,8 @@ FiniteTotallyOrderedSet = new Type of VisibleList
 OrderPreservingInjectiveFunction = new Type of HashTable
 ConstantOIAlgebra = new Type of HashTable
 OIModule = new Type of HashTable
-OIModuleElement = new Type of VisibleList  
+OIModuleElement = new Type of VisibleList
+OIModuleMap = new Type of HashTable  
 -----------------------
 -- Type constructors --
 -----------------------
@@ -340,6 +343,41 @@ getOIBasis Module := List => (M) -> (
 	)
     )
 
+OIMap = method()
+
+--Add a check that the imageGensList is the same length as the 
+--number of generators of M
+
+OIMap (OIModule, OIModule, List) := OIModuleMap => (M,N,l) -> (
+    new OIModuleMap from {
+	symbol source => M,
+	symbol target => N,
+	symbol imageGensList => l 
+	}
+    )
+
+getImageGensList = method()
+
+getImageGensList OIModuleMap := List => (phi) -> (
+    phi#(symbol imageGensList)
+    )
+    
+OIModuleMap ZZ := matrix => (phi, n) -> (
+    testVector := {1};
+    vectors := {};
+    widths := getWidthList(phi#(symbol source));
+    imageGens := getImageGensList phi;
+    for i from 0 to ((length widths)-1) when widths_i < n+1 do (
+	maps := OIHom(widths_i, n);
+	for i from 0 to ((length maps)-1) do (
+	   -- vectors = append(vectors, (N maps_i) imageGens_i)
+	   vectors = append(vectors, testVector)	    
+	    )	
+	);
+    matrix((getOIAlgebra (phi#(symbol source)))#(symbol ring), vectors)
+    --matrix(vectors)
+    )
+
 beginDocumentation()
 
 -- front page of documentation
@@ -459,4 +497,13 @@ basisList = getOIBasis M
 basisList / (e -> net e)
 
 -- also, I can no longer peek at the cache of M ??
-peek (M#cache)
+
+restart
+installPackage "OIModules"
+
+A = makeOIAlgebra (ZZ/2)
+M = A^{1}
+N = A^{1}
+phi = OIMap(M,N,{1})
+phi 1
+
