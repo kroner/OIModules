@@ -173,14 +173,16 @@ cat(Automaton,Automaton) := Automaton => (A,B) -> (
 	);
     Acc := apply(toList B.accepts, state->n+position(B.states,st->st===state));
     if member(B.initial, B.accepts) then Acc = Acc|(toList A.accepts);
-    automaton(S,n+m,Mats,Acc)
+    D := automaton(S,n+m,Mats,Acc);
+    NFA2DFA D
     )
 
 kleeneStar = method()
 kleeneStar(Automaton) := Automaton => A -> (
     S := A.alphabet;
     Mats := for l from 0 to #S-1 list A.transitions#l + ((A.transitions#l)_{0})*(acceptVect A);
-    automaton(S,A.states,Mats,{A.initial}|(toList A.accepts))
+    B := automaton(S,A.states,Mats,{A.initial}|(toList A.accepts));
+    NFA2DFA B
     )
 
 transitionMatrix = method()

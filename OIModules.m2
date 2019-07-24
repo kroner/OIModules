@@ -37,7 +37,7 @@ export {
     "makeOIAlgebra",
     "OICleaner",
     "OIDivisionAlgorithm",
-    "getOIBasis"
+    "getOIBasis",
     "getOIAlgebra",
     "getWidthList"
     }
