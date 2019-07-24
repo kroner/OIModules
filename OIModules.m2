@@ -26,7 +26,9 @@ export {
     "OIMorphism",
     "OIHom",
     "makeOIAlgebra",
-    "getOIBasis"
+    "getOIBasis",
+    "getOIAlgebra",
+    "getWidthList"
     }
 
 protect \ {widthList,OIAlgebra,OIBasis}
@@ -155,6 +157,29 @@ ConstantOIAlgebra ^ List := OIModule => (A,l) -> (
 	symbol widthList => l,
 	symbol OIAlgebra => A
 	}
+    )
+
+getWidthList = method()
+
+getWidthList OIModule := List => (M) -> (
+    M#(symbol widthList)
+    )
+
+getOIAlgebra = method()
+
+getOIAlgebra OIModule := ConstantOIAlgebra => (M) -> (
+    M#(symbol OIAlgebra)
+    )
+
+
+OIModule ++ OIModule := OIModule => (M,N) -> (
+    if ((getOIAlgebra M).ring) =!= ((getOIAlgebra N).ring) then
+      error "expected OIModules over the same OIAlgebra";  
+    new OIModule from {
+	symbol cache => hashTable{},
+	symbol numgens => M#(symbol numgens) + N#(symbol numgens),
+	symbol widthList => getWidthList M | getWidthList N	
+	}    
     )
 
 OIModule FiniteTotallyOrderedSet := Module => (M,n) -> (
