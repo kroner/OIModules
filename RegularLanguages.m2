@@ -569,6 +569,58 @@ doc ///
 	       C {}
 ///
 
+doc ///
+     Key
+          cat
+	  (cat,Automaton,Automaton)
+     Headline
+          Automaton for the concatenation of languages
+     Usage
+          C = cat(A,B)
+     Inputs
+          A:Automaton
+	  B:Automaton
+     Outputs
+          C:Automaton
+     Description
+          Text
+	       Produces the automaton that accepts on the language that is the concatenation of
+	       those accepted by the two input automata
+	  Example
+	       S = {a,b}
+	       A = wordAutomaton(S, word {a,a})
+	       B = wordAutomaton(S, word {b,b})
+	       C = cat(A,B)
+	       C {a,a,b,b}
+///
+
+doc ///
+     Key
+          automatonHS
+	  (automatonHS,Automaton,List)
+     Headline
+          generating function of an automaton
+     Usage
+          f = automatonHS(A,W)
+     Inputs
+          A:Automaton
+	  W:List
+	       weights
+     Outputs
+          f:RingElement
+     Description
+          Text
+	       Produces the generating function of the language accepted by the automaton
+	       with weights W.  W should have a weight for each element of the alphabet,
+	       and the weights should be elements of a fraction field.
+	  Example
+	       S = {a,b}
+	       Mats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
+	       A = automaton({a,b},3,Mats,{2})
+	       T = frac(QQ[t])
+	       f = automatonHS(A,{t,t})
+///
+
 end
 ----------
 
@@ -591,6 +643,11 @@ B' = kleeneStar B
 B' {a,a,b,a,a,b}
 B' {a,a,b,b}
 automatonHS(B',{1,1})
+
+A = wordAutomaton({a,b}, word {a})
+B = union(wordAutomaton({a,b},word {b}),A)
+kleeneStar
+
 
 needsPackage "RegularLanguages"
 needsPackage "EquivariantGB"
