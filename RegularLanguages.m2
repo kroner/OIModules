@@ -109,6 +109,7 @@ matricesToArrows(List,List,List) := (S,states,Mats) -> (
 	M := Mats#l;
 	for j from 0 to n-1 do (
 	    is := select(n, i-> M_(i,j) != 0);
+	    is = apply(is, i -> states#i);
 	    (HashList#j)#(S#l) = is;
 	    );
 	);
