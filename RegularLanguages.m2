@@ -23,6 +23,7 @@ export {
     "automaton",
     "isDeterministic",
     "transitionMatrix",
+    "renameStates",
     "union",
     "intersection",
     "kleeneStar",
@@ -183,7 +184,16 @@ transitionMatrix = method()
 transitionMatrix(Automaton,Thing) := (A,l) -> (
     k := position(A.alphabet, m -> m===l);
     A.transitions#k
-    ) 
+    )
+
+renameStates = method()
+renameStates(Automaton) := A -> renameStates(A,toList(0..#A.states-1))
+renameStates(Automaton,List) := (A,L) -> (
+    assert(#L == #A.states);
+    Acc := select(#L, i->member(A.states#i, A.accepts));
+    Acc = apply(Acc, i->L#i);
+    automaton(A.alphabet,L,A.transitions,Acc)
+    )
 
 -- characteristic column vector of the initial state.
 initVect = A -> transpose matrix {toList apply(A.states, s->if s===A.initial then 1 else 0)}
@@ -517,7 +527,8 @@ doc ///
 	       A = wordAutomaton(S, word {a,a})
 	       B = complement A
 	       B {a,a}
-	       
+     Caveat
+          Applying this function to nondeterministic automata may give incorrect results.
 ///
 
 doc ///
@@ -547,6 +558,7 @@ doc ///
 
 doc ///
      Key
+     	  intersection
 	  (intersection,Automaton,Automaton)
      Headline
           Automaton for the intersection of languages
@@ -596,6 +608,30 @@ doc ///
 
 doc ///
      Key
+          kleeneStar
+	  (kleeneStar,Automaton)
+     Headline
+          Automaton for the Kleene star of a language
+     Usage
+          B = kleeneStar(A)
+     Inputs
+          A:Automaton
+     Outputs
+          B:Automaton
+     Description
+          Text
+	       Produces the automaton that accepts on the language that is the Kleene star of
+	       the one accepted by the input automaton.
+	  Example
+	       S = {a,b}
+	       A = wordAutomaton(S, word {a})
+	       B = kleeneStar A
+	       B {a,a,a,a}
+	       B {}
+///
+
+doc ///
+     Key
           automatonHS
 	  (automatonHS,Automaton,List)
      Headline
@@ -619,6 +655,29 @@ doc ///
 	       A = automaton({a,b},3,Mats,{2})
 	       T = frac(QQ[t])
 	       f = automatonHS(A,{t,t})
+     Caveat
+          Applying this function to nondeterministic automata may give incorrect results.
+///
+
+doc ///
+     Key
+          isDeterministic
+	  (isDeterministic,Automaton)
+     Usage
+          b = isDeterministic(A)
+     Inputs
+          A:Automaton
+     Outputs
+          b:Boolean
+     Description
+          Text
+	       Returns whether the automaton is deterministic (one arrow per letter from each
+	       state) or nondeterministic (possibly more arrows per letter).
+	  Example
+	       S = {a,b}
+	       Mats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
+	       A = automaton({a,b},3,Mats,{2})
+	       isDeterministic A
 ///
 
 end
