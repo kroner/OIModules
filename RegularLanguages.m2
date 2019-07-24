@@ -177,7 +177,7 @@ automatonHS = method()
 automatonHS(Automaton,List) := (A,weights) -> (
     k := #A.states;
     T := ring first weights;
-    M := apply(#A.alphabet, l->sub(transitionMatrix(A,l),T));
+    M := apply(A.alphabet, l->sub(transitionMatrix(A,l),T));
     v := sub(initVect A,T);
     u := sub(acceptVect A,T);
     N := id_(T^k) - sum apply(#A.alphabet, i->(M#i)*(weights#i));
@@ -433,6 +433,7 @@ B = wordAutomaton({a,b}, word {a,a,b})
 B' = kleeneStar B
 B' {a,a,b,a,a,b}
 B' {a,a,b,b}
+automatonHS(B',{1,1})
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
 A = automaton({0,1},3,tmats,{1,2})
 trim A
@@ -444,27 +445,6 @@ R = buildERing(S,{1,1},QQ,2) -- make a ring with 2 variable orbits, x,y
 f = y_1*x_0 - x_1*y_0 -- {f} is an EGB for 2x2 minors
 A = idealAutomaton {f}; -- A rejects monomials in the intial ideal of {f} and words not in standard form
 h = 1 + s*automatonHS(A,{s,t,t}) -- the shift operator gets weight s, and x,y both get weight t
-
-S = {symbol x}
-R = buildERing(S,{1},QQ,2)
-A = idealAutomaton {x_0^2,x_0*x_1};
-h = 1 + s*automatonHS(A,{s,t})
-
-
-
-
-S = {symbol x, symbol y}
-w = monomialToWord f
-A1 = wordAutomaton(w,{rho}|S)
-B = commAutomaton({rho}|S)
-A = productAutomaton(A1,B)
-
-S = {symbol x}
-R = buildERing(S,toList(#S:1),QQ,1)
-m = x_0^2
-exponentMatrix m
-w = monomialToWord m
-A = wordAutomaton(w,{rho}|S)
 
 
 
