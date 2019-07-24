@@ -166,7 +166,16 @@ OIMorphism (List,ZZ) := OrderPreservingInjectiveFunction => (l,n) -> (
 
 net OrderPreservingInjectiveFunction := (epsilon) -> (
     vals := epsilon#(symbol values);
-    fold(vals, (x,y) -> (toString x) | (toString y))
+    if (length vals == 0) then (
+	net 0
+	) else (
+	if (length vals == 1) then (
+	    net vals_0
+	    )
+    	else (
+    	    fold(vals, (x,y) -> (toString x) | (toString y))
+	    )
+	)
     )
 
 -- get source object
@@ -275,7 +284,7 @@ OIModule FiniteTotallyOrderedSet := Module => (M,n) -> (
 	nthModuleRank := length naturalBasis;	
 	underlyingRing := M#(symbol OIAlgebra)#(symbol ring);
 	nthModule := underlyingRing^nthModuleRank;
-	nthModule#cache#OIBasis = naturalBasis;
+	nthModule#cache#(symbol OIBasis) = naturalBasis;
 	M#(symbol cache)#n = nthModule;
 	nthModule
 	)
@@ -285,11 +294,17 @@ OIModule ZZ := Module => (M,n) -> (
     M OIObject n
     )
 
+OIModule OrderPreservingInjectiveFunction := (Matrix) => (M,epsilon) -> (
+    sourceModule := M source epsilon;
+    targetModule := M target epsilon;
+    random(targetModule, sourceModule)
+    )
+
 getOIBasis = method()
 
 getOIBasis Module := List => (M) -> (
-    if (M#cache #? OIBasis) then (
-	M#cache#OIBasis
+    if (M#cache #? (symbol OIBasis)) then (
+	M#cache# (symbol OIBasis)
 	)
     else (
 	error "Module does not have a cached OIBasis"
@@ -371,33 +386,58 @@ tau  = OIMorphism {1,3,5,8}
 
 A = makeOIAlgebra (ZZ/2)
 M = A^{1,2,4}
+ep = OIMorphism({1,2,4})
+M ep
 ob1 = OIObject 4
 F = M ob1
 naturalBasis = getOIBasis F
 naturalBasis / (e -> net e)
 
 
+-- net problem example:
+
 restart
 installPackage "OIModules"
 
+-- two objects in OI:
+
 ob1 = OIObject 3
 ob2 = OIObject 6
-l1 = OIHom(ob1, ob1)
-l2 = OIHom(ob1, ob2)
-l3 = OIHom(ob1, ob2)
-ep = OIMorphism({1,2,4})
+
+-- these look fine:
+
 tau  = OIMorphism {1,3,5,8}
 
-A = makeOIAlgebra (ZZ/2)
-M = A^{1,2,4}
-ob1 = OIObject 3
-M ob1 
-objectList = apply(20, i -> OIObject i)
-objectList / (n -> rank (N n))
+-- toString (or net?) on a list of OI morphisms seems to work fine here:
 
-R = ZZ/31991[x]
+h = OIHom(ob1, ob2)
 
-F=R^3
-hashTable { a => 0, b => 1 , c => 2}
-F
+-- but:
 
+R = QQ[x,y]
+A = makeOIAlgebra (R)
+F = A^{1,2,4}
+
+-- you can look at the modules you get by applying F to the first few values:
+
+apply(10, i -> F i)
+
+-- or get a particular one:
+
+ob3 = OIObject 5
+M = F ob3 
+
+-- now M is almost an ordinary M2 object.
+-- But it has one new thing added to M.cache: a symbol, called OIBasis, which
+-- records a list of morphisms in OI, used for bookkeeping the standard basis for M.
+
+-- however, this list of OImorphisms can't be printed nicely  (claiming a time limit was reached):
+
+basisList = getOIBasis M
+
+-- despite this seeming to work:
+
+basisList / (e -> net e)
+
+-- also, I can no longer peek at the cache of M ??
+peek (M#cache)
