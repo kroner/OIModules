@@ -37,7 +37,7 @@ export {
     "cat"
      }
 
-protect \ {arrows, accepts, states, alphabet, initial, transitions}
+protect \ {arrows, accepts, states, alphabet, initial, transitions, deterministic}
 --Types
 Automaton = new Type of HashTable
 Word = new Type of List
@@ -60,27 +60,31 @@ automaton(List,List,HashTable,List) := Automaton => (S,sts,ars,Acc) -> (
 	);
     ars = hashTable L;
     Mats := arrowsToMatrices(S,sts,ars);
-    Acc = toList((set sts)*(set Acc)); 
+    Acc = toList((set sts)*(set Acc));
+    d := not any(sts, state -> any(S, l -> #ars#state#l > 1));
     new Automaton from {
 	alphabet => S, 
 	states => sts,
 	arrows => ars,
 	transitions => Mats,
 	initial => first sts, 
-	accepts => set Acc
+	accepts => set Acc,
+	deterministic => d
 	}
     )
 automaton(List,List,List,Set) := Automaton => (S,sts,Mats,Acc) -> automaton(S,sts,Mats,toList Acc)
 automaton(List,List,List,List) := Automaton => (S,sts,Mats,Acc) -> (
     ars := matricesToArrows(S,sts,Mats);
-    Acc = toList((set sts)*(set Acc)); 
+    Acc = toList((set sts)*(set Acc));
+    d := not any(sts, state -> any(S, l -> #ars#state#l > 1));
     new Automaton from {
 	alphabet => S, 
 	states => sts,
 	arrows => ars,
 	transitions => Mats,
 	initial => first sts, 
-	accepts => set Acc
+	accepts => set Acc,
+	deterministic => d
 	}
     )
 automaton(List,ZZ,List,Set) := Automaton => (S,n,Mats,Acc) -> automaton(S,n,Mats,toList Acc)
@@ -187,10 +191,7 @@ initVect = A -> transpose matrix {toList apply(A.states, s->if s===A.initial the
 acceptVect = A -> matrix {toList apply(A.states, s->if member(s,A.accepts) then 1 else 0)}
 
 isDeterministic = method()
-isDeterministic(Automaton) := A -> (
-    for state in A.states do for l in A.alphabet do if #A.arrows#state#l > 1 then return false;
-    true
-    )
+isDeterministic(Automaton) := A -> A.deterministic
 
 automatonHS = method()
 automatonHS(Automaton,List) := (A,weights) -> (
@@ -644,7 +645,7 @@ end
 restart
 installPackage "RegularLanguages"
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
-A = automaton({0,1},3,tmats,{2})
+A = automaton({0,1},{a,b,c},tmats,{2})
 isDeterministic A
 A {0,1,0,0,1,0,1,0}
 A {1,1}
