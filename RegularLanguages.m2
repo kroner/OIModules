@@ -214,7 +214,7 @@ wordAutomaton(List,Word) := (S,w) -> (
 
 
 elementToWord = method()
-elementToWord OIModuleElement := e -> (
+elementToWord List := e -> (
     n := source e;
     m := target e;
     k := 1;
@@ -227,14 +227,13 @@ elementToWord OIModuleElement := e -> (
     )
 
 elementAutomaton = method()
-elementAutomaton OIModuleElement := e -> (
+elementAutomaton List := e -> (
     w := elementToWord e;
     hashs := for i from 0 to #w-1 list (
 	if w#i == 0 then hashTable{0 => {i+1}} else hashTable{0 => {i}, 1 => {i+1}}
 	);
     automaton({0,1},toList(0..#w+1),hashTable hashs,{#w})
     )
-	
 
 ----------------------------------------------------------------------------------------------
 -- OI-algebra Hilbert series methods
@@ -365,6 +364,13 @@ doc ///
      Description
           Text
 	       Can represent a deterministic or nondeterinistic automaton.
+	       
+	       The following example makes an automaton that only accepts the word aab.
+	  Example
+	       S = {a,b}
+	       B = wordAutomaton(S, word {a,a,b})
+	       B {a,a,b}
+	       B {a,a,b,b}
 ///
 
 doc ///
