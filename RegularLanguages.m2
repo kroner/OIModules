@@ -6,7 +6,10 @@ newPackage(
      HomePage => "",
      Authors => {
 	  },
-     PackageImports => {"EquivariantGB"},
+     PackageImports => {
+	 "EquivariantGB",
+	 "OIModules"
+	 },
      DebuggingMode => true, --should be true while developing a package, 
      --   but false after it is done
      AuxiliaryFiles => false
@@ -175,7 +178,7 @@ automatonHS = method()
 automatonHS(Automaton,List) := (A,weights) -> (
     k := #A.states;
     T := ring first weights;
-    M := apply(#A.alphabet, l->sub(transitionMatrix(A,l),T));
+    M := apply(A.alphabet, l->sub(transitionMatrix(A,l),T));
     v := sub(initVect A,T);
     u := sub(acceptVect A,T);
     N := id_(T^k) - sum apply(#A.alphabet, i->(M#i)*(weights#i));
@@ -189,8 +192,7 @@ trim Automaton := o -> A -> (
     seen := new MutableHashTable from stateHash;
     while #keys(stateHash) > 0 do (
 	state := first keys stateHash;
-	for l in S do (
-	    newState := A.arrows#state#l;
+	for l in S do for newState in A.arrows#state#l do (
 	    if seen#?newState then continue;
 	    stateHash#newState = 0;
 	    seen#newState = 0;
@@ -211,6 +213,7 @@ wordAutomaton(List,Word) := (S,w) -> (
     automaton(S,toList(0..n+1),arrows,{n})
     )
 
+
 -- automaton that accepts any letter of the input set
 -- it is equivalent to the regular expression {a,b,...,n}
 -- Input: A language S and a subset of letter U
@@ -224,6 +227,28 @@ setAutomaton(List,List) :=(S,U) -> (
     automaton(S,sts,ars,acc)  
     )
 
+elementToWord = method()
+elementToWord OIModuleElement := e -> (
+    n := source e;
+    m := target e;
+    k := 1;
+    L := for i from 1 to n list (
+	space := (e i) - k;
+	k = e i;
+	(toList (space:0))|{1}
+	);
+    (join L)|(toList (m-k):0)
+    )
+
+elementAutomaton = method()
+elementAutomaton OIModuleElement := e -> (
+    w := elementToWord e;
+    hashs := for i from 0 to #w-1 list (
+	if w#i == 0 then hashTable{0 => {i+1}} else hashTable{0 => {i}, 1 => {i+1}}
+	);
+    automaton({0,1},toList(0..#w+1),hashTable hashs,{#w})
+    )
+	
 ----------------------------------------------------------------------------------------------
 -- OI-algebra Hilbert series methods
 
@@ -244,9 +269,9 @@ monomialAutomaton = (m,S) -> (
     A := automaton(S,#w+1,toList(0..#w-1));
     lastrho := 0;
     for i from 0 to #w-1 do (
-	A.arrows#i#(w#i) = i+1;
+	A.arrows#i#(w#i) = {i+1};
 	if w#i == 0 then lastrho = i+1
-	else A.arrows#i#0 = lastrho;
+	else A.arrows#i#0 = {lastrho};
 	);
     A
     )
@@ -257,9 +282,9 @@ monomialAutomaton = (m,S) -> (
 commAutomaton = S -> (
     A := automaton(S,#S,toList(0..#S-2));
     for i from 0 to #S-2 do (
-	A.arrows#i#0 = 0;
+	A.arrows#i#0 = {0};
 	for l from 0 to #S-2 do
-	    A.arrows#i#(l+1) = if l < i then #S-1 else l;
+	    A.arrows#i#(l+1) = if l < i then {#S-1} else {l};
 	);
     A
     )
@@ -417,6 +442,7 @@ B = wordAutomaton({a,b}, word {a,a,b})
 B' = kleeneStar B
 B' {a,a,b,a,a,b}
 B' {a,a,b,b}
+automatonHS(B',{1,1})
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
 A = automaton({0,1},3,tmats,{1,2})
 trim A
@@ -428,27 +454,6 @@ R = buildERing(S,{1,1},QQ,2) -- make a ring with 2 variable orbits, x,y
 f = y_1*x_0 - x_1*y_0 -- {f} is an EGB for 2x2 minors
 A = idealAutomaton {f}; -- A rejects monomials in the intial ideal of {f} and words not in standard form
 h = 1 + s*automatonHS(A,{s,t,t}) -- the shift operator gets weight s, and x,y both get weight t
-
-S = {symbol x}
-R = buildERing(S,{1},QQ,2)
-A = idealAutomaton {x_0^2,x_0*x_1};
-h = 1 + s*automatonHS(A,{s,t})
-
-
-
-
-S = {symbol x, symbol y}
-w = monomialToWord f
-A1 = wordAutomaton(w,{rho}|S)
-B = commAutomaton({rho}|S)
-A = productAutomaton(A1,B)
-
-S = {symbol x}
-R = buildERing(S,toList(#S:1),QQ,1)
-m = x_0^2
-exponentMatrix m
-w = monomialToWord m
-A = wordAutomaton(w,{rho}|S)
 
 
 
