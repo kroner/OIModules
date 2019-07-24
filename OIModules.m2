@@ -281,6 +281,10 @@ OIModule FiniteTotallyOrderedSet := Module => (M,n) -> (
 	)
     )
 
+OIModule ZZ := Module => (M,n) -> (
+    M OIObject n
+    )
+
 getOIBasis = method()
 
 getOIBasis Module := List => (M) -> (
