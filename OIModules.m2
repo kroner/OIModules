@@ -30,8 +30,10 @@ export {
     "makeOIAlgebra",
     "OIElement",
     "OIMonomials"
+    "getOIBasis"
     }
 
+protect \ {widthList,OIAlgebra,OIBasis}
 
 ---------------
 -- New types --
@@ -194,6 +196,22 @@ OrderPreservingInjectiveFunction OrderPreservingInjectiveFunction := OrderPreser
 	}
     )
 
+-- compare morphisms in OI
+
+OrderPreservingInjectiveFunction ? OrderPreservingInjectiveFunction := (ep, tau) -> (
+    if source ep != source tau then (
+	symbol incomparable
+	)
+    else (
+	if (target ep != target tau) then (
+	    length target ep ? length target tau
+	    )
+	else (
+	    ep#(symbol values) ? tau#(symbol values)
+	    )
+	)
+    )
+
 OIHom = method()
 
 OIHom (FiniteTotallyOrderedSet, FiniteTotallyOrderedSet) := List => (ob1, ob2) -> (
@@ -211,7 +229,42 @@ makeOIAlgebra Ring := ConstantOIAlgebra => (K) -> (
     )
 
 net ConstantOIAlgebra := (A) -> (
-    net A#(symbol ring)
+    "The constant OI-algebra determined by "| net A#(symbol ring)
+    )
+
+ConstantOIAlgebra ^ List := OIModule => (A,l) -> (
+    new OIModule from {
+	symbol cache => new MutableHashTable from {},
+	symbol numgens => length l,
+	symbol widthList => l,
+	symbol OIAlgebra => A
+	}
+    )
+
+OIModule FiniteTotallyOrderedSet := Module => (M,n) -> (
+    if (M#(symbol cache) #? n) then (
+ 	M#(symbol cache) # n
+	)
+    else (	
+	naturalBasis := flatten (M#(symbol widthList) / (w -> sort OIHom(OIObject w,n)));
+	nthModuleRank := length naturalBasis;	
+	underlyingRing := M#(symbol OIAlgebra)#(symbol ring);
+	nthModule := underlyingRing^nthModuleRank;
+	nthModule#cache#OIBasis = naturalBasis;
+	M#(symbol cache)#n = nthModule;
+	nthModule
+	)
+    )
+
+getOIBasis = method()
+
+getOIBasis Module := List => (M) -> (
+    if (M#cache #? OIBasis) then (
+	M#cache#OIBasis
+	)
+    else (
+	error "Module does not have a cached OIBasis"
+	)
     )
 
 beginDocumentation()
@@ -229,6 +282,7 @@ doc ///
 ///
 
 end
+
 
 restart
 installPackage "OIModules"
@@ -252,11 +306,10 @@ OIHom(ob1, ob2)
 ep = OIMorphism {1,2,4}
 tau  = OIMorphism {1,3,5,8}
 
+
 -- operator precedece
 
 -- nets vs strings, printing in matrices
-
--- hashtable keys in package (symbol, string, etc)
 
 -- coherence w/ type system, class vs parent
 
@@ -265,12 +318,57 @@ tau  = OIMorphism {1,3,5,8}
 -- conflicts between dictionaries
 
 -- some packages are symbols, some are packages
-quit
+
+--quit
+--installPackage "OIModules"
+--M = OIMorphism{1,4,7,11,15,17,18}
+--N = OIMorphism({1,2,3,5,7,9,18})
+--S = OIElement{{1,M}}
+--T = OIElement{{1,N}}
+--OIMontoHilbert({S})
+--OIMontoHilbert({T})
+--OIMontoHilbert({S,T})
+
+
+-- net function so that the net of A=OIAlg(R) is just "A" (like rings)
+
+-- when to export overloaded binary / unary operators?
+
+-- diff between methodFunction and FunctionClosure
+
+-- keys of hashtables, symbols in various dictionaries, accessor methods
+
+-- net of list of functionVals:
+
+A = makeOIAlgebra (ZZ/2)
+M = A^{1,2,4}
+ob1 = OIObject 4
+F = M ob1
+naturalBasis = getOIBasis F
+naturalBasis / (e -> net e)
+
+
+restart
 installPackage "OIModules"
-M = OIMorphism{1,4,7,11,15,17,18}
-N = OIMorphism({1,2,3,5,7,9,18})
-S = OIElement{{1,M}}
-T = OIElement{{1,N}}
-OIMontoHilbert({S})
-OIMontoHilbert({T})
-OIMontoHilbert({S,T})
+
+ob1 = OIObject 3
+ob2 = OIObject 6
+l1 = OIHom(ob1, ob1)
+l2 = OIHom(ob1, ob2)
+l3 = OIHom(ob1, ob2)
+ep = OIMorphism({1,2,4})
+tau  = OIMorphism {1,3,5,8}
+
+A = makeOIAlgebra (ZZ/2)
+M = A^{1,2,4}
+ob1 = OIObject 3
+M ob1 
+objectList = apply(20, i -> OIObject i)
+objectList / (n -> rank (N n))
+
+R = ZZ/31991[x]
+
+F=R^3
+hashTable { a => 0, b => 1 , c => 2}
+F
+
