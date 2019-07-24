@@ -25,6 +25,12 @@ export {
     "OIObject",
     "OIMorphism",
     "OIHom",
+    "OIElement",
+    "OIMonomialtoMonomial",
+    "OIMonomials",
+    "OIMontoHilbert",
+    "Hilb",
+    "isOIMonomial",
     "makeOIAlgebra"
     }
 
@@ -37,10 +43,88 @@ FiniteTotallyOrderedSet = new Type of VisibleList
 OrderPreservingInjectiveFunction = new Type of HashTable
 ConstantOIAlgebra = new Type of HashTable
 OIModule = new Type of HashTable
-
+OIModuleElement = new Type of VisibleList  
 -----------------------
 -- Type constructors --
 -----------------------
+
+-- constructor for OIElements
+
+OIElement = method()
+
+OIElement List := OIModuleElement => L -> (
+    new OIModuleElement from L)
+
+OIMonomials = method()
+
+OIMonomials OIModuleElement := List => m -> (
+     return for i in m list i_1)
+OIModuleElement + OIModuleElement := (a,b) -> (
+    temp := {};
+    for i in a do(
+	tempbool := false;
+	for j in b do(
+	    if i_1==j_1 then(
+		temp = append(temp, {i_0+j_0,i_1});
+		tempbool = true;
+		);
+	    );
+	if tempbool == false then(
+	    temp = append(temp, i));
+	);
+    for i in b do(
+	tempbool := false;
+	for j in a do(
+	    if i_1 == j_1 then tempbool = true);
+	if tempbool == false then temp = append(temp, i));
+    return(OIElement(temp)))
+
+isOIMonomial = m -> #m ==1
+
+OIMonomialtoMonomial = mon->(
+    assert(isOIMonomial mon);
+    t := mon_0_1;
+    m := #(target t);
+    n := #(source t);
+    R := QQ;--Base(mon);
+    x := getSymbol "x";
+    S := QQ[x_0..x_n];-- R[x_0..x_n];
+    temp :=1;
+    if n ==1 then(
+	print "here";
+	temp= temp*((S_0)^(t(1)-1))*((S_1)^(m-t(1)));
+        return {R,temp})
+    else(
+	temp= temp*(S_0)^(t(1)-1)*(S_n)^(m-t(n));
+	for i from 2 to n-1 do temp = temp*(S_i)^(t(i+1)-t(i)-1);
+	return {R,temp}))
+Hilb = L -> (
+    temp := {};
+    for i in L do temp = append(temp,OIMonomialtoMonomial i);
+    monomiallist := for i in temp list i_1;
+    I:= ideal(monomiallist);
+    return hilbertSeries I)
+    
+OIMontoHilbert = L -> (
+    for i in L do assert(isOIMonomial i);
+    basecase := L_0;
+    n :=#source(basecase_0_1);
+    R := QQ; --TO BE REPLACED BY RING/FIELD DEPENDING ON MONOMIALS
+    x:= getSymbol "x";
+    S:=R[x_0..x_n];
+    temp :={};
+    for mon in L do(
+	tempmonomial := 1;
+	t := mon_0_1;
+	m := #(target t);
+	tempmonomial = tempmonomial*(S_0)^(t(1)-1)*(S_n)^(m-t(n));
+	for i from 2 to n-1 do tempmonomial = tempmonomial*(S_i)^(t(i+1)-t(i)-1);
+	temp = append(temp,tempmonomial);
+	);
+    I := ideal(temp);
+    return hilbertSeries I)
+	
+	
 
 -- constructor for FiniteTotallyOrderedSet objects
 
@@ -148,7 +232,20 @@ end
 
 restart
 installPackage "OIModules"
+FiniteTotallyOrderedSet
+OIModuleElement
+List
+M={{1,OIMorphism({1,2,9})}}
+M_0_1
+OIMorphism
+OIMorphism {1}
 
+
+
+m = OIElement M
+m
+OIMonomials m
+for i in m do print i_1
 ob1 = OIObject 3
 ob2 = OIObject 6
 OIHom(ob1, ob2)
@@ -168,3 +265,12 @@ tau  = OIMorphism {1,3,5,8}
 -- conflicts between dictionaries
 
 -- some packages are symbols, some are packages
+quit
+installPackage "OIModules"
+M = OIMorphism{1,4,7,11,15,17,18}
+N = OIMorphism({1,2,3,5,7,9,18})
+S = OIElement{{1,M}}
+T = OIElement{{1,N}}
+OIMontoHilbert({S})
+OIMontoHilbert({T})
+OIMontoHilbert({S,T})
