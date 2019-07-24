@@ -234,6 +234,39 @@ eHilbertSeries = F -> (
     
 
 
+-- Given a Non-Deterministic Finite Automaton (NFA) it implements the classical algorithm
+-- to convert it into a Deterministic Finite Automaton (DFA)
+-- The states of the DFA are indexed by sets of states of the original automaton
+
+-- Pre: 
+NFA2DFA(Automaton) = automaton -> (
+    
+    states := new MutableHashTable;
+    arrows := new MutableHashTable;
+    
+    frontier:= new MutableList from {{automaton#initial}};
+    while #frontier > 0  do (
+	  currentState := frontier#0;
+	  drop (frontier,1);
+	   
+	  starrows:= new MutableHashTable from automaton#arrows(frontier#0);
+	  
+	  for i to #keys(starrows) do (
+	     letter:= keys(starrows)#i;  
+	     stararrows#letter = unique 
+	     flatten apply(currentState,st -> automaton#arrows#letter);
+	     
+	     if ( states?#(stararrows#letter) ) then (
+		 
+		 frontier = append(frontier,stararrows#letter);
+		 );
+		    
+	  );	   
+      ); 
+	     
+	
+	) 
+    )
 
 
 
