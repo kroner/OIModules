@@ -263,13 +263,13 @@ surjToAutomaton List := f -> (
     m:=length f;
     val:=sort unique f;
     seen:=1;
-    ans:=cat(wordAutomaton(val, word{f_0}), kleeneStar(setAutomaton(val,{1})));
+    ans:=cat(wordAutomaton(val, word{f_0}), kleeneSetAutomaton(val,{1}));
     for i from 1 to m-1 do (
 	ans = cat(ans, wordAutomaton(val, word{f_i}));
 	if f_i > seen then 
 	if f_i > seen+1 then error "Input is not an ordered surjection."
 	else seen=seen+1;
-    	ans = cat(ans, kleeneStar(setAutomaton(val,toList(1..seen))));
+    	ans = cat(ans, kleeneSetAutomaton(val,toList(1..seen)));
 	);
     ans
     )
@@ -724,11 +724,11 @@ doc ///
     	A:Automaton
     Description
     	Text
-	    The monomials in a monomial submodule of a principal projective OS^op-module P_n 
+	    The monomials in a monomial submodule of a principal projective OS^{op}-module P_n 
 	    can be encoded by a regular sequence in the alphabet {1..n}. This method constructs
 	    the corresponding DFA.
 	Example
-	    A=surjectiontoAutomaton({{1}})
+	    A=surjectionToAutomaton({{1}})
 	    use frac(QQ[t])
 	    automatonHS(A,{t})
 ///
