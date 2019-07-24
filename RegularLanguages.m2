@@ -6,7 +6,10 @@ newPackage(
      HomePage => "",
      Authors => {
 	  },
-     PackageImports => {"EquivariantGB"},
+     PackageImports => {
+	 "EquivariantGB",
+	 "OIModules"
+	 },
      DebuggingMode => true, --should be true while developing a package, 
      --   but false after it is done
      AuxiliaryFiles => false
@@ -213,6 +216,28 @@ wordAutomaton(List,Word) := (S,w) -> (
     )
 
 
+elementToWord = method()
+elementToWord OIElement := e -> (
+    n := source e;
+    m := target e;
+    k := 1;
+    L := for i from 1 to n list (
+	space := (e i) - k;
+	k = e i;
+	(toList (space:0))|{1}
+	);
+    (join L)|(toList (m-k):0)
+    )
+
+elementAutomaton = method()
+elementAutomaton OIElement := e -> (
+    w := elementToWord e;
+    hashs := for i from 0 to #w-1 list (
+	if w#i == 0 then hashTable{0 => {i+1}} else hashTable{0 => {i}, 1 => {i+1}}
+	);
+    automaton({0,1},toList(0..#w+1),hashTable hashs,{#w})
+    )
+	
 
 ----------------------------------------------------------------------------------------------
 -- OI-algebra Hilbert series methods
@@ -234,9 +259,9 @@ monomialAutomaton = (m,S) -> (
     A := automaton(S,#w+1,toList(0..#w-1));
     lastrho := 0;
     for i from 0 to #w-1 do (
-	A.arrows#i#(w#i) = i+1;
+	A.arrows#i#(w#i) = {i+1};
 	if w#i == 0 then lastrho = i+1
-	else A.arrows#i#0 = lastrho;
+	else A.arrows#i#0 = {lastrho};
 	);
     A
     )
@@ -247,9 +272,9 @@ monomialAutomaton = (m,S) -> (
 commAutomaton = S -> (
     A := automaton(S,#S,toList(0..#S-2));
     for i from 0 to #S-2 do (
-	A.arrows#i#0 = 0;
+	A.arrows#i#0 = {0};
 	for l from 0 to #S-2 do
-	    A.arrows#i#(l+1) = if l < i then #S-1 else l;
+	    A.arrows#i#(l+1) = if l < i then {#S-1} else {l};
 	);
     A
     )
