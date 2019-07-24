@@ -87,7 +87,7 @@ arrowsToMatrices(List,List,HashTable) := (S,states,H) -> (
     for l in S list (
     	M := new MutableMatrix from map(ZZ^n,ZZ^n,0);
     	for j from 0 to n-1 do for i from 0 to n-1 do (
-	    if member(i, H#(states#j)#l) then M_(i,j) = 1;
+	    if member(states#i, H#(states#j)#l) then M_(i,j) = 1;
 	    );
     	new Matrix from M
 	)
@@ -211,6 +211,8 @@ wordAutomaton(List,Word) := (S,w) -> (
     )
 
 
+
+----------------------------------------------------------------------------------------------
 -- OI-algebra Hilbert series methods
 
 -- Minimal standard form word representation of monomail m.
@@ -365,8 +367,8 @@ doc ///
 	       
 	       The first way is as a HashTable of HashTables.  The keys
 	       of the HashTable are the states, and the values are HashTables that assign a
-	       state to each element of the alphabet.  Any missing arrows default to point
-	       to the last state.
+	       list of states to each element of the alphabet.  Any missing arrows default to 
+	       point to the last state.
 	       
 	       This example accepts words in the alphabet \{a,b\} that contain at least one b
 	  Example
