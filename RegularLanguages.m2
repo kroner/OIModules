@@ -189,10 +189,12 @@ trim Automaton := o -> A -> (
     while #keys(stateHash) > 0 do (
 	state := first keys stateHash;
 	for l in S do (
-	    newState := A.arrows#state#l;
-	    if seen#?newState then continue;
-	    stateHash#newState = 0;
-	    seen#newState = 0;
+	    newStates := A.arrows#state#l;
+	    for newState in newStates do (
+	    	if seen#?newState then continue;
+	    	stateHash#newState = 0;
+	    	seen#newState = 0;
+		);
 	    );
 	remove(stateHash,state);
 	);
