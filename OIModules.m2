@@ -25,13 +25,11 @@ export {
     "OIObject",
     "OIMorphism",
     "OIHom",
-    "OIElement",
-    "OIMonomialtoMonomial",
-    "OIMonomials",
     "OIMontoHilbert",
-    "Hilb",
     "isOIMonomial",
-    "makeOIAlgebra"
+    "makeOIAlgebra",
+    "OIElement",
+    "OIMonomials"
     }
 
 
@@ -43,86 +41,88 @@ FiniteTotallyOrderedSet = new Type of VisibleList
 OrderPreservingInjectiveFunction = new Type of HashTable
 ConstantOIAlgebra = new Type of HashTable
 OIModule = new Type of HashTable
-OIModuleElement = new Type of VisibleList  
+--OIModuleElement = new Type of VisibleList  
+OIModuleElement = new Type of HashTable
 -----------------------
 -- Type constructors --
 -----------------------
-
--- constructor for OIElements
+--Has Construction of OIElements
 
 OIElement = method()
 
-OIElement List := OIModuleElement => L -> (
-    new OIModuleElement from L)
+OIElement HashTable := OIModuleElement => H ->(
+    new OIModuleElement from H)
 
 OIMonomials = method()
-
-OIMonomials OIModuleElement := List => m -> (
-     return for i in m list i_1)
-OIModuleElement + OIModuleElement := (a,b) -> (
+OIMonomials OIModuleElement := List => H -> keys H
+OIModuleElement + OIModuleElement := (a,b) ->(
     temp := {};
-    for i in a do(
-	tempbool := false;
-	for j in b do(
-	    if i_1==j_1 then(
-		temp = append(temp, {i_0+j_0,i_1});
-		tempbool = true;
-		);
-	    );
-	if tempbool == false then(
-	    temp = append(temp, i));
-	);
-    for i in b do(
-	tempbool := false;
-	for j in a do(
-	    if i_1 == j_1 then tempbool = true);
-	if tempbool == false then temp = append(temp, i));
-    return(OIElement(temp)))
-
-isOIMonomial = m -> #m ==1
-
-OIMonomialtoMonomial = mon->(
-    assert(isOIMonomial mon);
-    t := mon_0_1;
-    m := #(target t);
-    n := #(source t);
-    R := QQ;--Base(mon);
-    x := getSymbol "x";
-    S := QQ[x_0..x_n];-- R[x_0..x_n];
-    temp :=1;
-    if n ==1 then(
-	print "here";
-	temp= temp*((S_0)^(t(1)-1))*((S_1)^(m-t(1)));
-        return {R,temp})
-    else(
-	temp= temp*(S_0)^(t(1)-1)*(S_n)^(m-t(n));
-	for i from 2 to n-1 do temp = temp*(S_i)^(t(i+1)-t(i)-1);
-	return {R,temp}))
-Hilb = L -> (
-    temp := {};
-    for i in L do temp = append(temp,OIMonomialtoMonomial i);
-    monomiallist := for i in temp list i_1;
-    I:= ideal(monomiallist);
-    return hilbertSeries I)
+    for i in OIMonomials a do(
+	if b#?i then temp = append(temp, {i,a#i+b#i})
+	else temp = append(temp,{i,a#i}));
+    for j in OIMonomials b do(
+	if not a#?j then temp = append(temp,{j,b#j}));
+    temphash := new HashTable from temp;
+    return OIElement temphash)
     
-OIMontoHilbert = L -> (
-    for i in L do assert(isOIMonomial i);
-    basecase := L_0;
-    n :=#source(basecase_0_1);
-    R := QQ; --TO BE REPLACED BY RING/FIELD DEPENDING ON MONOMIALS
-    x:= getSymbol "x";
-    S:=R[x_0..x_n];
-    temp :={};
-    for mon in L do(
-	tempmonomial := 1;
-	t := mon_0_1;
-	m := #(target t);
-	tempmonomial = tempmonomial*(S_0)^(t(1)-1)*(S_n)^(m-t(n));
-	for i from 2 to n-1 do tempmonomial = tempmonomial*(S_i)^(t(i+1)-t(i)-1);
-	temp = append(temp,tempmonomial);
-	);
-    I := ideal(temp);
-    return hilbertSeries I)
+ZZ*OIModuleElement := (a,b) -> (HOIElement(hashTable(for i in keys b list {i,a*b#i})))
+QQ*OIModuleElement := (a,b) -> (HOIElement(hashTable(for i in keys b list {i,a*b#i})))
+RingElement*OIModuleElement := (a,b) -> (HOIElement(hashTable(for i in keys b list {i,a*b#i})))
+
+OIModuleElement - OIModuleElement := (a,b) -> a+((-1)*b)
+
+
+
+
+
+-- constructor for OIElements
+
+OrderPreservingInjectiveFunction == OrderPreservingInjectiveFunction := (a,b) ->(
+    if #(source a) != #(source b) then return false
+    else if #(target a)!= #(target b) then return false
+    else(
+	tempbool := true;
+	for i from 1 to #(source a) do(
+	    if a(i) != b(i) then tempbool false);
+	return tempbool))    
+    
+--OIMonomialtoMonomial = mon->(
+--    assert(isOIMonomial mon);
+--    t := mon_0_1;
+--    m := #(target t);
+--    n := #(source t);
+--    R := QQ;--Base(mon);
+--    x := getSymbol "x";
+--    S := QQ[x_0..x_n];-- R[x_0..x_n];
+--    temp :=1;
+--    if n ==1 then(
+--	print "here";
+--	temp= temp*((S_0)^(t(1)-1))*((S_1)^(m-t(1)));
+--        return {R,temp})
+--    else(
+--	temp= temp*(S_0)^(t(1)-1)*(S_n)^(m-t(n));
+--	for i from 2 to n-1 do temp = temp*(S_i)^(t(i+1)-t(i)-1);
+--	return {R,temp}))
+    
+--OIMontoHilbert = L -> (
+--    for i in L do assert(isOIMonomial i);
+--    basecase := L_0;
+--    n :=#source(basecase_0_1);
+--    R := QQ; --TO BE REPLACED BY RING/FIELD DEPENDING ON MONOMIALS
+--    x:= getSymbol "x";
+--    S:=R[x_0..x_n];
+--    temp :={};
+--    for mon in L do(
+--	tempmonomial := 1;
+--	t := mon_0_1;
+--	m := #(target t);
+--	tempmonomial = tempmonomial*(S_0)^(t(1)-1)*(S_n)^(m-t(n));
+--	for i from 1 to n-1 do tempmonomial = tempmonomial*(S_i)^(t(i+1)-t(i)-1);
+--	temp = append(temp,tempmonomial);
+--	);
+--    I := ideal(temp);
+--    return hilbertSeries I)
+
 	
 	
 
