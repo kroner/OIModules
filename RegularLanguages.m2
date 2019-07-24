@@ -24,6 +24,7 @@ export {
     "isDeterministic",
     "transitionMatrix",
     "union",
+    "intersection",
     "kleeneStar",
     "wordAutomaton",
     "setAutomaton",
@@ -133,20 +134,24 @@ complement(Automaton) := Automaton => A -> (
     new Automaton from H
     )
 
-intersect(Automaton,Automaton) := Automaton => (A,B) -> (
+productList = (L,M) -> flatten for a in L list for b in M list (a,b)
+
+intersection = method()
+intersection(Automaton,Automaton) := Automaton => (A,B) -> (
     S := A.alphabet;
-    sts := flatten for a in A.states list for b in B.states list (a,b);
-    Acc := flatten for a in toList A.accepts list for b in toList B.accepts list (a,b);
-    C := automaton(S,sts,(A.initial,B.initial),Acc);
-    for state in sts do for l in S do (
-	C.arrows#state#l = (A.arrows#(state#0)#l, B.arrows#(state#1)#l);
+    sts := productList(A.states, B.states);
+    Acc := productList(toList A.accepts, toList B.accepts);
+    ars := hashTable for state in sts list (
+	state => hashTable for l in S list (
+	    l => productList(A.arrows#(state#0)#l, B.arrows#(state#1)#l)
+	    )
 	);
-    C
-    )
+    	automaton(S,sts,ars,Acc)
+    )	 
 
 union = method()
 union(Automaton,Automaton) := Automaton => (A,B) -> (
-    complement ((complement A) * (complement B))
+    complement intersection(complement A, complement B)
     )
 
 cat = method()
@@ -513,6 +518,55 @@ doc ///
 	       B = complement A
 	       B {a,a}
 	       
+///
+
+doc ///
+     Key
+          union
+	  (union,Automaton,Automaton)
+     Headline
+          Automaton for the union of languages
+     Usage
+          C = union(A,B)
+     Inputs
+          A:Automaton
+	  B:Automaton
+     Outputs
+          C:Automaton
+     Description
+          Text
+	       Produces the automaton that accepts on the language that is the union of
+	       those accepted by the two input automata
+	  Example
+	       S = {a,b}
+	       A = wordAutomaton(S, word {a,a})
+	       B = wordAutomaton(S, word {b,b})
+	       C = union(A,B)
+	       C {a,a}
+///
+
+doc ///
+     Key
+	  (intersection,Automaton,Automaton)
+     Headline
+          Automaton for the intersection of languages
+     Usage
+          C = intersection(A,B)
+     Inputs
+          A:Automaton
+	  B:Automaton
+     Outputs
+          C:Automaton
+     Description
+          Text
+	       Produces the automaton that accepts on the language that is the intersection of
+	       those accepted by the two input automata
+	  Example
+	       S = {a,b}
+	       A = kleeneStar(wordAutomaton(S, word {a,a}))
+	       B = kleeneStar(wordAutomaton(S, word {b,b}))
+	       C = intersection(A,B)
+	       C {}
 ///
 
 end
