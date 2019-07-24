@@ -191,13 +191,10 @@ trim Automaton := o -> A -> (
     seen := new MutableHashTable from stateHash;
     while #keys(stateHash) > 0 do (
 	state := first keys stateHash;
-	for l in S do (
-	    newStates := A.arrows#state#l;
-	    for newState in newStates do (
-	    	if seen#?newState then continue;
-	    	stateHash#newState = 0;
-	    	seen#newState = 0;
-		);
+	for l in S do for newState in A.arrows#state#l do (
+	    if seen#?newState then continue;
+	    stateHash#newState = 0;
+	    seen#newState = 0;
 	    );
 	remove(stateHash,state);
 	);
@@ -230,7 +227,7 @@ elementToWord OIElement := e -> (
     )
 
 elementAutomaton = method()
-elementAutomaton OIElement := e -> (
+elementAutomaton OIModuleElement := e -> (
     w := elementToWord e;
     hashs := for i from 0 to #w-1 list (
 	if w#i == 0 then hashTable{0 => {i+1}} else hashTable{0 => {i}, 1 => {i+1}}

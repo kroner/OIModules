@@ -26,6 +26,7 @@ export {
     "OIMorphism",
     "OIHom",
     "OIElement",
+    "OIModuleElement",
     "OIMonomialtoMonomial",
     "OIMonomials",
     "OIMontoHilbert",
