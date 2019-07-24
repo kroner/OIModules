@@ -73,7 +73,6 @@ automaton(List,List,List,List) := (S,sts,Mats,Acc) -> (
 	initial => first sts, 
 	accepts => set Acc
 	}
->>>>>>> 9921df641f7b8b66fafbf58df678214b095867d6
     )
 automaton(List,ZZ,List,List) := (S,n,Mats,Acc) -> automaton(S,toList(0..n-1),Mats,Acc)
 
@@ -293,15 +292,15 @@ NFA2DFA(Automaton) := aut -> (
 	     
 	     -- Check last is rejected state
 	     -- Make the list of accepted states
-	     if ( not sts#?(starrows#letter) ) then (
+	     if ( not ars#?(starrows#letter) ) then (
 		 
 		 frontier = append(frontier,starrows#letter);
 		 );	    
 	     );
 	 ars#currentState = starrows;
       	 );
-      acc:= select(keys(sts), l->l#?(last aut.states);
-      automaton(sort keys(ars),ars,first sts,acc)
+      acc:= select(keys(ars), l->l#?(last aut.states));
+      automaton(aut.alphabet,sort keys(ars),ars,acc)
       
     )
 
@@ -383,8 +382,6 @@ end
 ----------
 
 restart
-
-loadPackage (RegularLanguages,Reload=>true)
 installPackage "RegularLanguages"
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
 A = automaton({0,1},3,tmats,{2})
