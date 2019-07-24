@@ -61,11 +61,13 @@ automaton(List,List,HashTable,List) := (S,sts,ars,Acc) -> (
 	accepts => set Acc
 	}
     )
+
 automaton(List,List,List,List) := (S,states,Mats,Acc) -> (
     ars := matricesToArrows(S,states,Mats);
     automaton(S,states,ars,Acc)
     )
 automaton(List,ZZ,List,List) := (S,n,Mats,Acc) -> automaton(S,toList(0..n-1),Mats,Acc)
+
 
 -- transition matrix of automaton A for letter l
 arrowsToMatrices = method()
@@ -250,33 +252,35 @@ eHilbertSeries = F -> (
 -- Pre:The NFA stores lists of states as targets. If it has a single target a, it stores
 -- the singleton {a}.
 NFA2DFA = method() 
-NFA2DFA(Automaton) := A -> (
+NFA2DFA(Automaton) := aut -> (
     
-    states := new MutableHashTable;
-    arrows := new MutableHashTable;
-    
-    frontier := { {first automaton#states}};
+    print(aut.arrows);
+    print aut.states;
+    ars := new MutableHashTable;
+    print keys aut;
+    frontier := { {first aut.states}};
     while #frontier > 0  do (
 	  currentState := frontier#0;
 	  drop (frontier,1);
 	   
-	  starrows:= new MutableHashTable from A#arrows(frontier#0);
+	  starrows:= new MutableHashTable from aut.arrows#(frontier#0);
 	  
 	  for i to #keys(starrows) do (
 	     letter:= keys(starrows)#i;  
-	     starrows#letter = unique flatten apply(currentState,st -> A#arrows#letter);
+	     starrows#letter = unique flatten apply(currentState,st -> aut.arrows#letter);
 	     
 	     
 	     -- Check last is rejected state
 	     -- Make the list of accepted states
-	     if ( not states#?(starrows#letter) ) then (
+	     if ( not sts#?(starrows#letter) ) then (
 		 
 		 frontier = append(frontier,starrows#letter);
 		 );	    
 	     );
-	 arrows#currentState = starrows;	   
+	 ars#currentState = starrows;
       	 );
-      automaton(states,arrows,first states,last states)
+      acc:= select(keys(sts), l->l#?(last aut.states);
+      automaton(sort keys(ars),ars,first sts,acc)
       
     )
 
@@ -405,18 +409,22 @@ w = monomialToWord m
 A = wordAutomaton(w,{rho}|S)
 
 
-S = {symbol a, symbol b}
+
+S = {0, 1}
 sts = toList ( 1..4)
-arrows1  = new HashTable from {a => {2},b=> {4}}
-arrows2 = new HashTable from {a => {2,3},b=> {2}}
-arrows3 = new HashTable from {a => {4},b=> {4}}
-arrows4 = new HashTable from {a => {4},b=> {4}}
+arrows1  = new HashTable from {0 => {2},1=> {4}}
+arrows2 = new HashTable from {0 => {2,3},1=> {2}}
+arrows3 = new HashTable from {0 => {4},1=> {4}}
+arrows4 = new HashTable from {0 => {4},1=> {4}}
 
 ars = new HashTable from {1 => arrows1,2 => arrows2,3 => arrows3,4 => arrows4}
 Acc = {3}
 
-A = automaton(S,states,arrows,accepted)
+--A = automaton(S,states,arrows,accepted)
 --NFA have a problem constructing the matrices with the current implementation 
+
+tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
+A = automaton({0,1},3,tmats,{2})
 
 A = new Automaton from {
 	alphabet => S, 
