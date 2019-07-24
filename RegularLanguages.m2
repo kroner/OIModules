@@ -236,12 +236,10 @@ wordAutomaton(List,Word) := (S,w) -> (
 -- Input: A language S and a subset of letter U
 setAutomaton = method()
 setAutomaton(List,List) :=(S,U) -> (
-    
-    sts := toList (0..#U+1);
-    hash0 := hashTable apply(#U,i-> (U#i =>{i+1}));
-    ars:= hashTable {0 => hash0};
-    acc:= toList (1..#U);
-    automaton(S,sts,ars,acc)  
+    junk:=hashTable apply(S,i->(i=>{2}));
+    hash0 := hashTable apply(S, i-> if member(i,U) then (i=>{1}) else (i=>{2}));
+    ars:= hashTable {0 => hash0, 1=>junk, 2=>junk};
+    automaton(S,{0,1,2},ars,{1})
     )
 
 elementToWord = method()
