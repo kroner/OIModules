@@ -19,6 +19,7 @@ export {
     "RegularLanguage",
     "automaton",
     "transitionMatrix",
+    "kleeneStar",
     "wordAutomaton",
     "monomialAutomaton",
     "monomialToWord",
@@ -43,6 +44,7 @@ word(List) := L -> new Word from L
 -- New automaton with states indexed by snames, alphabet S, i the intial state and A the set of accept states.
 -- The arrows are not yet defined.
 automaton = method()
+automaton(List,List,HashTable,Set) := (S,sts,ars,Acc) -> automaton(S,sts,ars,toList Acc)
 automaton(List,List,HashTable,List) := (S,sts,ars,Acc) -> (
     L := for state in sts list (
 	starrows := if ars#?state then new MutableHashTable from ars#state else new MutableHashTable;
@@ -61,7 +63,7 @@ automaton(List,List,HashTable,List) := (S,sts,ars,Acc) -> (
 	accepts => set Acc
 	}
     )
-
+automaton(List,List,List,Set) := (S,sts,Mats,Acc) -> automaton(S,sts,Mats,toList Acc)
 automaton(List,List,List,List) := (S,sts,Mats,Acc) -> (
     ars := matricesToArrows(S,sts,Mats);
     Acc = toList((set sts)*(set Acc)); 
@@ -74,6 +76,7 @@ automaton(List,List,List,List) := (S,sts,Mats,Acc) -> (
 	accepts => set Acc
 	}
     )
+automaton(List,ZZ,List,Set) := (S,n,Mats,Acc) -> automaton(S,n,Mats,toList Acc)
 automaton(List,ZZ,List,List) := (S,n,Mats,Acc) -> automaton(S,toList(0..n-1),Mats,Acc)
 
 
@@ -84,7 +87,7 @@ arrowsToMatrices(List,List,HashTable) := (S,states,H) -> (
     for l in S list (
     	M := new MutableMatrix from map(ZZ^n,ZZ^n,0);
     	for j from 0 to n-1 do for i from 0 to n-1 do (
-	    if member(i, H#(states#j)#l) then M_(i,j) = 1;
+	    if member(states#i, H#(states#j)#l) then M_(i,j) = 1;
 	    );
     	new Matrix from M
 	)
@@ -148,6 +151,13 @@ cat(Automaton,Automaton) := (A,B) -> (
     automaton(S,n+m,Mats,Acc)
     )
 
+kleeneStar = method()
+kleeneStar(Automaton) := A -> (
+    S := A.alphabet;
+    Mats := for l from 0 to #S-1 list A.transitions#l + ((A.transitions#l)_{0})*(acceptVect A);
+    automaton(S,A.states,Mats,A.accepts)
+    )
+
 transitionMatrix = method()
 transitionMatrix(Automaton,Thing) := (A,l) -> (
     k := position(A.alphabet, m -> m===l);
@@ -197,10 +207,12 @@ wordAutomaton(List,Word) := (S,w) -> (
     n := #w;
     hashs := apply(n, i-> i => hashTable{w#i => {i+1}});
     arrows := hashTable hashs;
-    automaton(S,toList(0..n+1),arrows,{n-1})
+    automaton(S,toList(0..n+1),arrows,{n})
     )
 
 
+
+----------------------------------------------------------------------------------------------
 -- OI-algebra Hilbert series methods
 
 -- Minimal standard form word representation of monomail m.
@@ -351,8 +363,8 @@ doc ///
 	       
 	       The first way is as a HashTable of HashTables.  The keys
 	       of the HashTable are the states, and the values are HashTables that assign a
-	       state to each element of the alphabet.  Any missing arrows default to point
-	       to the last state.
+	       list of states to each element of the alphabet.  Any missing arrows default to 
+	       point to the last state.
 	       
 	       This example accepts words in the alphabet \{a,b\} that contain at least one b
 	  Example
@@ -381,13 +393,18 @@ restart
 installPackage "RegularLanguages"
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
 A = automaton({0,1},3,tmats,{2})
-A(new Word from {0,1,0,0,1,0,1,0})
-A(new Word from {1,1})
-B = cat(A,A)
-B {0,1,1,1,1}
-B {0,1,1,1}
-A = wordAutomaton({a,b}, word {a,a,b})
-
+A {0,1,0,0,1,0,1,0}
+A {1,1}
+AA = cat(A,A)
+AA {0,1,1,1,1}
+AA {0,1,1,1}
+A' = kleeneStar(A)
+A' {1}
+A' {1,1,1,1}
+B = wordAutomaton({a,b}, word {a,a,b})
+B' = kleeneStar B
+B' {a,a,b,a,a,b}
+B' {a,a,b,b}
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
 A = automaton({0,1},3,tmats,{1,2})
 trim A

@@ -122,7 +122,7 @@ OIMontoHilbert = L -> (
 	t := mon_0_1;
 	m := #(target t);
 	tempmonomial = tempmonomial*(S_0)^(t(1)-1)*(S_n)^(m-t(n));
-	for i from 2 to n-1 do tempmonomial = tempmonomial*(S_i)^(t(i+1)-t(i)-1);
+	for i from 1 to n-1 do tempmonomial = tempmonomial*(S_i)^(t(i+1)-t(i)-1);
 	temp = append(temp,tempmonomial);
 	);
     I := ideal(temp);
