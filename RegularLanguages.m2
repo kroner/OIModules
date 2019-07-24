@@ -692,3 +692,12 @@ A = setAutomaton(S,{1})
 B = setAutomaton(S,{1})
 B = kleeneStar(B)
 
+path = append(path,"~/OIModules/OIModules/")
+S = {0,1,2}
+A = setAutomaton(S,{1})
+B = setAutomaton(S,{1})
+B = kleeneStar(B)
+A = cat(A,B)
+
+kleeneStar(union(wordAutomaton({a,b},word{a}),wordAutomaton({a,b},word{b})))
+
