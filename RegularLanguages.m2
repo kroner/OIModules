@@ -21,7 +21,9 @@ export {
     "word",
     "RegularLanguage",
     "automaton",
+    "isDeterministic",
     "transitionMatrix",
+    "union",
     "kleeneStar",
     "wordAutomaton",
     "monomialAutomaton",
@@ -83,7 +85,7 @@ automaton(List,ZZ,List,Set) := Automaton => (S,n,Mats,Acc) -> automaton(S,n,Mats
 automaton(List,ZZ,List,List) := Automaton => (S,n,Mats,Acc) -> automaton(S,toList(0..n-1),Mats,Acc)
 
 
--- transition matrix of automaton A for letter l
+-- converts HashTables of arrows to a list of transition matrices
 arrowsToMatrices = method()
 arrowsToMatrices(List,List,HashTable) := (S,states,H) -> (
     n := #states;
@@ -96,6 +98,7 @@ arrowsToMatrices(List,List,HashTable) := (S,states,H) -> (
 	)
     )
 
+-- converts a list of transition matrices to HashTables of arrows
 matricesToArrows = method()
 matricesToArrows(List,List,List) := (S,states,Mats) -> (
     HashList := apply(states, state->new MutableHashTable);
@@ -117,6 +120,10 @@ Automaton Word := (A,w) -> (
     (acceptVect(A)*v)_(0,0) != 0
     )
 Automaton List := (A,L) -> A (word L)
+
+net Automaton := A -> (
+    "Automaton on states "|net(A.states)
+    )
 
 
 complement(Automaton) := Automaton => A -> (
@@ -172,6 +179,11 @@ initVect = A -> transpose matrix {toList apply(A.states, s->if s===A.initial the
 -- characteristic row vector of the accept states.
 acceptVect = A -> matrix {toList apply(A.states, s->if member(s,A.accepts) then 1 else 0)}
 
+isDeterministic = method()
+isDeterministic(Automaton) := A -> (
+    for state in A.states do for l in A.alphabet do if #A.arrows#state#l > 1 then return false;
+    true
+    )
 
 automatonHS = method()
 automatonHS(Automaton,List) := (A,weights) -> (
@@ -355,10 +367,11 @@ doc ///
           
 ///
 
-
 doc ///
      Key
           Automaton
+	  (symbol SPACE,Automaton,List)
+	  (symbol SPACE,Automaton,Word)
      Headline
           the class of finite state automata
      Description
@@ -434,6 +447,64 @@ doc ///
 	       A {b,b}
 ///
 
+doc ///
+     Key
+          Word
+     Headline
+          the class of words in a finite alphabet
+     Description
+          Text
+	       Should this class even exist?
+	  Example
+	       S = {a,b}
+	       w = word {a,a,a}
+	       A = wordAutomaton(S, w)
+	       A w
+///
+
+doc ///
+     Key
+	  (trim,Automaton)
+     Headline
+          removes extraneous states from an Automaton
+     Usage
+          B = trim A
+     Inputs
+          A:Automaton
+     Outputs
+          B:Automaton
+     Description
+          Text
+	       Removes any unreachable states from an Automaton
+	  Example
+	       tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
+	       A = automaton({0,1},3,tmats,{1,2})
+	       B = trim A
+///
+
+doc ///
+     Key
+	  (complement,Automaton)
+     Headline
+          Automaton for the complement language
+     Usage
+          B = complement A
+     Inputs
+          A:Automaton
+     Outputs
+          B:Automaton
+     Description
+          Text
+	       Produces the automaton that accepts on the language that is complement to that
+	       of the input.  These two automata differ only in which states are accepting.
+	  Example
+	       S = {a,b}
+	       A = wordAutomaton(S, word {a,a})
+	       B = complement A
+	       B {a,a}
+	       
+///
+
 end
 ----------
 
@@ -441,9 +512,11 @@ restart
 installPackage "RegularLanguages"
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
 A = automaton({0,1},3,tmats,{2})
+isDeterministic A
 A {0,1,0,0,1,0,1,0}
 A {1,1}
 AA = cat(A,A)
+isDeterministic AA
 AA {0,1,1,1,1}
 AA {0,1,1,1}
 A' = kleeneStar(A)
@@ -454,9 +527,6 @@ B' = kleeneStar B
 B' {a,a,b,a,a,b}
 B' {a,a,b,b}
 automatonHS(B',{1,1})
-tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
-A = automaton({0,1},3,tmats,{1,2})
-trim A
 
 needsPackage "EquivariantGB"
 T = frac(QQ[s,t])
