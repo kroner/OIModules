@@ -213,13 +213,14 @@ wordAutomaton(List,Word) := (S,w) -> (
 
 -- automaton that accepts any letter of the input set
 -- it is equivalent to the regular expression {a,b,...,n}
+-- Input: A language S and a subset of letter U
 setAutomaton = method()
-setAutomaton(List) :=(S) -> (
+setAutomaton(List,List) :=(S,U) -> (
     
-    sts := toList (0..#S+1);
-    hash := apply(#S,i->i => hashTable{S#i =>{i+1}});
-    ars:= hashTable hash;
-    acc:= toList (1..#S);
+    sts := toList (0..#U+1);
+    hash0 := hashTable apply(#U,i-> (U#i =>{i+1}));
+    ars:= hashTable {0 => hash0};
+    acc:= toList (1..#U);
     automaton(S,sts,ars,acc)  
     )
 
@@ -480,5 +481,8 @@ tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
 A = automaton({0,1},3,tmats,{1,2})
 NFA2DFA A
 
-S = {0,1,2,3,4}
-setAutomaton(S)
+S = {0,1,2}
+A = setAutomaton(S,{1})
+B = setAutomaton(S,{1})
+B = kleeneStar(B)
+
