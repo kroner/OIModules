@@ -26,6 +26,7 @@ export {
     "union",
     "kleeneStar",
     "wordAutomaton",
+    "setAutomaton",
     "monomialAutomaton",
     "monomialToWord",
     "commAutomaton",
@@ -225,6 +226,19 @@ wordAutomaton(List,Word) := (S,w) -> (
     )
 
 
+-- automaton that accepts any letter of the input set
+-- it is equivalent to the regular expression {a,b,...,n}
+-- Input: A language S and a subset of letter U
+setAutomaton = method()
+setAutomaton(List,List) :=(S,U) -> (
+    
+    sts := toList (0..#U+1);
+    hash0 := hashTable apply(#U,i-> (U#i =>{i+1}));
+    ars:= hashTable {0 => hash0};
+    acc:= toList (1..#U);
+    automaton(S,sts,ars,acc)  
+    )
+
 elementToWord = method()
 elementToWord List := e -> (
     n := source e;
@@ -321,32 +335,28 @@ eHilbertSeries = F -> (
 NFA2DFA = method() 
 NFA2DFA(Automaton) := aut -> (
     
-    print(aut.arrows);
-    print aut.states;
     ars := new MutableHashTable;
-    print keys aut;
     frontier := { {first aut.states}};
     while #frontier > 0  do (
 	  currentState := frontier#0;
-	  drop (frontier,1);
+	  frontier = drop (frontier,1);
 	   
-	  starrows:= new MutableHashTable from aut.arrows#(frontier#0);
-	  
-	  for i to #keys(starrows) do (
-	     letter:= keys(starrows)#i;  
-	     starrows#letter = unique flatten apply(currentState,st -> aut.arrows#letter);
+	  starrows:= new MutableHashTable from aut.arrows#(aut.initial);
+	  for letter in keys(starrows) do (
+	     starrows#letter = {unique flatten apply(currentState,st -> aut.arrows#st#letter)};
 	     
 	     
 	     -- Check last is rejected state
 	     -- Make the list of accepted states
-	     if ( not ars#?(starrows#letter) ) then (
+	     if ( not ars#?(starrows#letter#0) ) then (
 		 
-		 frontier = append(frontier,starrows#letter);
+		 frontier = append(frontier,starrows#letter#0);
 		 );	    
 	     );
 	 ars#currentState = starrows;
       	 );
-      acc:= select(keys(ars), l->l#?(last aut.states));
+      
+      acc:= select(keys(ars), l->any(l, i-> member(i,aut.accepts)));
       automaton(aut.alphabet,sort keys(ars),ars,acc)
       
     )
@@ -563,4 +573,12 @@ A = new Automaton from {
 	accepts => set Acc
 	}
 
+tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
+A = automaton({0,1},3,tmats,{1,2})
 NFA2DFA A
+
+S = {0,1,2}
+A = setAutomaton(S,{1})
+B = setAutomaton(S,{1})
+B = kleeneStar(B)
+
