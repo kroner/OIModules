@@ -699,6 +699,57 @@ doc ///
 	       isDeterministic A
 ///
 
+doc ///
+     Key
+          wordAutomaton
+	  (wordAutomaton,List,Word)
+     Headline
+          Automaton of a singleton language 
+     Usage
+          A = wordAutomaton(S,w)
+     Inputs
+          S:List
+	       the alphabet
+          w:Word
+     Outputs
+          A:Automaton
+     Description
+          Text
+	       Returns an Automaton that accepts the singleton language consisting only of the
+	       word w.
+	  Example
+	       S = {a,b}
+	       w = word {a,a,b}
+	       A = wordAutomaton(S,w)
+	       A w
+	       A {a,a,b,b}
+///
+
+doc ///
+     Key
+          setAutomaton
+	  (setAutomaton,List,List)
+     Headline
+          Automaton of a set of letters 
+     Usage
+          A = setAutomaton(S,U)
+     Inputs
+          S:List
+	       the alphabet
+	  U:List
+	       a subset of the alphabet
+     Outputs
+          A:Automaton
+     Description
+          Text
+	       Returns an Automaton that accepts only the singlton words for the letters in U.
+	  Example
+	       S = {a,b,c}
+	       A = setAutomaton(S,{a,b})
+	       A {a}
+	       A {c}
+///
+
 end
 ----------
 
