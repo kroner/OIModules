@@ -364,6 +364,10 @@ getImageGensList OIModuleMap := List => (phi) -> (
     )
     
 OIModuleMap ZZ := matrix => (phi, n) -> (
+    M := phi#(symbol source);
+    N := phi#(symbol target);
+    if (M n) == 0 then return map(N n, M n, 0);
+    if (N n) == 0 then return map(N n, M n, 0);
     vectors := {};
     widths := getWidthList(phi#(symbol source));
     imageGens := getImageGensList phi;
@@ -503,16 +507,14 @@ restart
 installPackage "OIModules"
 
 A = makeOIAlgebra (ZZ/101)
-M = A^{1,1}
-N = A^{1,1}
+M = A^{4,5}
+N = A^{2,3}
 N 1
-g1 = random(N 1, (ZZ/101)^1)
-g2 = random(N 1, (ZZ/101)^1)
-phi = OIMap(M,N,{entries g1, entries g2})
+M 1
+g1 = random(N 4, (ZZ/101)^1)
+g2 = random(N 5, (ZZ/101)^1)
+phi = OIMap(M,N,{entries g1,entries g2})
 phi 1
 phi 2
-phi 3
-
-
-transpose matrix {flatten entries g1}
-entries g1
+phi 4
+phi 5
