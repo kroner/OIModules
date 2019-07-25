@@ -546,6 +546,32 @@ doc ///
 
 doc ///
      Key
+          word
+	  (word,String)
+	  (word,List)
+     Headline
+          constructor for Word class
+     Usage
+          w = word L
+	  w = word S
+     Inputs
+          L:List
+	  S:String
+     Outputs
+          w:Word
+     Description
+          Text
+	       Converts a list of characters or symbols, or a string into a Word, which can
+	       be input into an Automaton.
+	  Example
+	       w = word "aabbcc"
+	       A = wordAutomaton({"a","b","c"}, w)
+	       u = word {a,a,a}
+	       A u
+///
+
+doc ///
+     Key
 	  (trim,Automaton)
      Headline
           removes extraneous states from an Automaton
