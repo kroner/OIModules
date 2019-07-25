@@ -174,7 +174,10 @@ cat(Automaton,Automaton) := Automaton => (A,B) -> (
 	matrix{{A.transitions#l, map(ZZ^n,ZZ^m,0)},{C, B.transitions#l}}
 	);
     Acc := apply(toList B.accepts, state->n+position(B.states,st->st===state));
-    if member(B.initial, B.accepts) then Acc = Acc|(toList A.accepts);
+    if member(B.initial, B.accepts) then (
+	AccA := apply(toList A.accepts, state->position(A.states,st->st===state));
+	Acc = Acc|AccA;
+	);
     D := automaton(S,n+m,Mats,Acc);
     NFA2DFA D
     )
@@ -816,6 +819,32 @@ doc ///
 	    automatonHS(A,{t})
 ///
 
+doc ///
+    Key
+    	NFA2DFA
+	(NFA2DFA, Automaton)
+    Headline
+    	transforms a Non-Deterministic Finite Automaton (NFA) into a Deterministic Finite
+	Automaton (DFA). 
+    Usage
+    	B = NFA2DFA(A)
+    Inputs
+	A:Automaton
+	    Automaton
+    Outputs
+    	B:Automaton
+    Description
+    	Text
+	    Given an NFA there is a standard algorithm that transforms it into a DFA.
+	    It works by constructing a new automaton from the power set of the states of the NFA.
+	Example
+	    A= kleeneStar(union(wordAutomaton({a,b}, word {a}),wordAutomaton({a,b}, word {b})))
+	    peek A
+	    B = NFA2DFA A
+	    peek B
+///
+    	
+
 end
 ----------
 
@@ -841,9 +870,12 @@ B' {a,a,b,b}
 automatonHS(B',{1,1})
 
 A = wordAutomaton({1},word{1})
-B = kleeneStar A
-C = cat(A,B)
-
+B = kleeneSetAutomaton({1},{1})
+AB = cat(A,B)
+AB' = NFA2DFA AB
+ABA = cat(AB',A)
+ABA' = NFA2DFA ABA
+ABAB = cat(ABA',B)
 
 needsPackage "RegularLanguages"
 needsPackage "EquivariantGB"
