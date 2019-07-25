@@ -19,7 +19,6 @@ export {
     "Automaton",
     "Word",
     "word",
-    "RegularLanguage",
     "automaton",
     "isDeterministic",
     "transitionMatrix",
@@ -30,10 +29,6 @@ export {
     "wordAutomaton",
     "setAutomaton",
     "surjectionToAutomaton",
-    "monomialAutomaton",
-    "monomialToWord",
-    "commAutomaton",
-    "idealAutomaton",
     "automatonHS",
     "NFA2DFA",
     "cat",
@@ -44,7 +39,7 @@ protect \ {arrows, accepts, states, alphabet, initial, transitions, deterministi
 --Types
 Automaton = new Type of HashTable
 Word = new Type of List
-RegularLanguage = new Type of HashTable
+--RegularLanguage = new Type of HashTable
 
 --Methods
 
@@ -452,7 +447,9 @@ doc ///
      Key
           Automaton
 	  (symbol SPACE,Automaton,List)
+	  (symbol SPACE,Automaton,String)
 	  (symbol SPACE,Automaton,Word)
+	  (net,Automaton)
      Headline
           the class of finite state automata
      Description
@@ -588,6 +585,59 @@ doc ///
 	       tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
 	       A = automaton({0,1},3,tmats,{1,2})
 	       B = trim A
+///
+
+doc ///
+     Key
+          renameStates
+	  (renameStates,Automaton)
+	  (renameStates,Automaton,List)
+     Headline
+          rename the states of an Automaton
+     Usage
+          B = renameStates(A)
+	  B = renameStates(A,L)
+     Inputs
+          A:Automaton
+	  L:List
+     Outputs
+          B:Automaton
+     Description
+          Text
+	       Renames the states of an automaton by the elements of the list L.  If no list is
+	       provided, then the nonnegative integers 0..n-1 are used, where n is the number
+	       of states.
+	  Example
+	       C = wordAutomaton({a,b,c}, word {c})
+	       A = cat(C,C)
+	       B = renameStates A
+///
+
+doc ///
+     Key
+          transitionMatrix
+	  (transitionMatrix,Automaton,Thing)
+     Headline
+          transition matrix of an Automaton
+     Usage
+          M = renameStates(A,l)
+     Inputs
+          A:Automaton
+	  l:Thing
+	       element of the alphabet
+     Outputs
+          M:Matrix
+     Description
+          Text
+	       A finite state automaton can be represented by its transition matrices,
+	       one for each element of the alphabet.  The transition matrix for element l
+	       is the adjacency matrix of the directed graph with edges labeled by l.
+	       Equivalently, it is the stochastic matrix that represents the state change
+	       when the letter l is encountered in a word.
+	  Example
+	       A = wordAutomaton({"a","b"}, word "aba")
+	       transitionMatrix(A,"a")
+	       transitionMatrix(A,"b")
 ///
 
 doc ///
@@ -936,10 +986,8 @@ automatonHS(B',{1,1})
 A = wordAutomaton({1},word{1})
 B = kleeneSetAutomaton({1},{1})
 AB = cat(A,B)
-AB' = NFA2DFA AB
-ABA = cat(AB',A)
-ABA' = NFA2DFA ABA
-ABAB = cat(ABA',B)
+ABA = cat(AB,A)
+ABAB = cat(ABA,B)
 
 needsPackage "RegularLanguages"
 needsPackage "EquivariantGB"
