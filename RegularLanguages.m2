@@ -992,6 +992,82 @@ assert (automatonHS (A,weights) == automatonHS(B,weights))
 automatonHS (A,weights)
 ///
 
+
+TEST ///
+-- Empty automaton
+R = frac(QQ[t]);
+S = {1,2,3};
+A = complement kleeneSetAutomaton(S,S);
+weights = toList (#S:t);
+assert (automatonHS(A,weights)==0_R)
+ 
+///
+
+
+TEST ///
+
+-- Assert functionality of surjectionToAutomaton method
+
+R = frac(QQ[t]);
+S = {1,2,3};
+A = setAutomaton (S,{1});
+A = cat(A, kleeneSetAutomaton(S,{1}));
+A = cat(A, setAutomaton(S,{2}));
+A = cat(A, kleeneSetAutomaton(S,{1,2}));
+A = cat(A, setAutomaton(S,{1}));
+A = cat(A, kleeneSetAutomaton(S,{1,2}));
+A = cat(A, setAutomaton(S,{2}));
+A = cat(A, kleeneSetAutomaton(S,{1,2}));
+A = cat(A, setAutomaton(S,{3}));
+A = cat(A, kleeneSetAutomaton(S,{1,2,3}));
+
+assert A "12123"
+assert A "112123"
+assert A "121123"
+assert A "121213"
+assert A "121223"
+assert A "121231"
+assert A "121232"
+assert A "121233"
+assert A "122123"
+automatonHS A;
+
+B = surjectionToAutomaton({{1,2,1,2,3}});
+
+
+assert B "12123"
+assert B "112123"
+assert B "121123"
+assert B "121213"
+assert B "121223"
+assert B "121231"
+assert B "121232"
+assert B "121233"
+assert B "122123"
+automatonHS B
+weights = toList (3:t);
+assert (automatonHS (A,weights) == automatonHS(B,weights))
+automatonHS (A,weights)
+
+
+ 
+///
+
+
+TEST ///
+
+-- surjectionToAutomatonBug
+
+l = {{0}};
+try A = surjectionToAutomaton l then assert false else assert true 
+l = {{{1,2,1,2,3}}}
+try A = surjectionToAutomaton l then assert false else assert true 
+l = {{1,2,1,2,3}}
+try A = surjectionToAutomaton l then assert true else assert false 
+  
+///
+
+
 end
 ----------
 
