@@ -221,6 +221,13 @@ automatonHS(Automaton,List) := (A,weights) -> (
     first flatten entries (u*(inverse N)*v)
     )
 
+automatonHS(Automaton) := A -> (
+    n:=#(A.alphabet);
+    T:=frac(QQ[t]);
+    use T;
+    automatonHS(A,apply(n,i->t))
+    )
+
 -- remove unreachable states from an automaton
 trim Automaton := o -> A -> (
     S := A.alphabet;
@@ -832,6 +839,7 @@ end
 ----------
 
 restart
+loadPackage "RegularLanguages"
 installPackage "RegularLanguages"
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
 A = automaton({a,b},3,tmats,{2}) -- accepts words with two b's in a row
