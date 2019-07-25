@@ -50,6 +50,7 @@ RegularLanguage = new Type of HashTable
 
 word = method()
 word(List) := L -> new Word from L
+word(String) := s -> word characters s
 
 -- New automaton with states indexed by snames, alphabet S, i the intial state and A the set of accept states.
 -- The arrows are not yet defined.
@@ -130,6 +131,7 @@ Automaton Word := (A,w) -> (
     (acceptVect(A)*v)_(0,0) != 0
     )
 Automaton List := (A,L) -> A (word L)
+Automaton String := (A,s) -> A (word s)
 
 net Automaton := A -> (
     "Automaton on states "|net(A.states)
@@ -187,7 +189,7 @@ kleeneStar(Automaton) := Automaton => A -> (
 
 transitionMatrix = method()
 transitionMatrix(Automaton,Thing) := (A,l) -> (
-    k := position(A.alphabet, m -> m===l);
+    k := position(A.alphabet, m -> (m===l or toString m == toString l));
     A.transitions#k
     )
 
@@ -394,7 +396,7 @@ eHilbertSeries = F -> (
 -- the singleton {a}.
 NFA2DFA = method() 
 NFA2DFA(Automaton) := aut -> (
-    
+    if isDeterministic aut then return aut;
     ars := new MutableHashTable;
     frontier := { {first aut.states}};
     while #frontier > 0  do (
@@ -417,9 +419,8 @@ NFA2DFA(Automaton) := aut -> (
       	 );
       
       acc:= select(keys(ars), l->any(l, i-> member(i,aut.accepts)));
-      automaton(aut.alphabet,sort keys(ars),ars,acc)
-      
-    )
+      trim automaton(aut.alphabet,sort keys(ars),ars,acc)
+      )
 
 
 
@@ -450,10 +451,10 @@ doc ///
 	       
 	       The following example makes an automaton that only accepts the word aab.
 	  Example
-	       S = {a,b}
-	       B = wordAutomaton(S, word {a,a,b})
-	       B {a,a,b}
-	       B {a,a,b,b}
+	       S = {"a","b"}
+	       B = wordAutomaton(S, word "aab")
+	       B "aab"
+	       B "aabb"
 ///
 
 doc ///
@@ -495,7 +496,8 @@ doc ///
 	       The first way is as a HashTable of HashTables.  The keys
 	       of the HashTable are the states, and the values are HashTables that assign a
 	       list of states to each element of the alphabet.  Any missing arrows default to 
-	       point to the last state.
+	       point to the last state.  The alphabet elements can either be symbols or strings
+	       with length 1.
 	       
 	       This example accepts words in the alphabet \{a,b\} that contain at least one b
 	  Example
@@ -512,9 +514,9 @@ doc ///
 	       This example accepts words in the alphabet \{a,b\} that contain two b's in a row.
           Example
                tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
-	       A = automaton({a,b},3,tmats,{2})
-	       A {a,b,a,a,b,a,b,a}
-	       A {b,b}
+	       A = automaton({"a","b"},3,tmats,{2})
+	       A "abaababa"
+	       A "bb"
 ///
 
 doc ///
@@ -623,7 +625,7 @@ doc ///
 	       A = kleeneStar(wordAutomaton(S, word {a,a}))
 	       B = kleeneStar(wordAutomaton(S, word {b,b}))
 	       C = intersection(A,B)
-	       C {}
+	       C ""
 ///
 
 doc ///
@@ -806,17 +808,17 @@ end
 restart
 installPackage "RegularLanguages"
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
-A = automaton({0,1},{a,b,c},tmats,{2})
+A = automaton({a,b},3,tmats,{2}) -- accepts words with two b's in a row
 isDeterministic A
-A {0,1,0,0,1,0,1,0}
-A {1,1}
+A {a,b,a,a,b,a,b,a}
+A {b,b}
 AA = cat(A,A)
 isDeterministic AA
-AA {0,1,1,1,1}
-AA {0,1,1,1}
+AA {a,b,b,a,b,b}
+AA {a,b,b,a,b,a}
 A' = kleeneStar(A)
-A' {1}
-A' {1,1,1,1}
+A' {b}
+A' {b,b,b,b}
 B = wordAutomaton({a,b}, word {a,a,b})
 B' = kleeneStar B
 B' {a,a,b,a,a,b}
