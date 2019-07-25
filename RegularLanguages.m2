@@ -19,7 +19,6 @@ export {
     "Automaton",
     "Word",
     "word",
-    "RegularLanguage",
     "automaton",
     "isDeterministic",
     "transitionMatrix",
@@ -30,10 +29,6 @@ export {
     "wordAutomaton",
     "setAutomaton",
     "surjectionToAutomaton",
-    "monomialAutomaton",
-    "monomialToWord",
-    "commAutomaton",
-    "idealAutomaton",
     "automatonHS",
     "NFA2DFA",
     "cat",
@@ -44,7 +39,7 @@ protect \ {arrows, accepts, states, alphabet, initial, transitions, deterministi
 --Types
 Automaton = new Type of HashTable
 Word = new Type of List
-RegularLanguage = new Type of HashTable
+--RegularLanguage = new Type of HashTable
 
 --Methods
 
@@ -453,7 +448,9 @@ doc ///
      Key
           Automaton
 	  (symbol SPACE,Automaton,List)
+	  (symbol SPACE,Automaton,String)
 	  (symbol SPACE,Automaton,Word)
+	  (net,Automaton)
      Headline
           the class of finite state automata
      Description
@@ -547,6 +544,32 @@ doc ///
 
 doc ///
      Key
+          word
+	  (word,String)
+	  (word,List)
+     Headline
+          constructor for Word class
+     Usage
+          w = word L
+	  w = word S
+     Inputs
+          L:List
+	  S:String
+     Outputs
+          w:Word
+     Description
+          Text
+	       Converts a list of characters or symbols, or a string into a Word, which can
+	       be input into an Automaton.
+	  Example
+	       w = word "aabbcc"
+	       A = wordAutomaton({"a","b","c"}, w)
+	       u = word {a,a,a}
+	       A u
+///
+
+doc ///
+     Key
 	  (trim,Automaton)
      Headline
           removes extraneous states from an Automaton
@@ -563,6 +586,59 @@ doc ///
 	       tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
 	       A = automaton({0,1},3,tmats,{1,2})
 	       B = trim A
+///
+
+doc ///
+     Key
+          renameStates
+	  (renameStates,Automaton)
+	  (renameStates,Automaton,List)
+     Headline
+          rename the states of an Automaton
+     Usage
+          B = renameStates(A)
+	  B = renameStates(A,L)
+     Inputs
+          A:Automaton
+	  L:List
+     Outputs
+          B:Automaton
+     Description
+          Text
+	       Renames the states of an automaton by the elements of the list L.  If no list is
+	       provided, then the nonnegative integers 0..n-1 are used, where n is the number
+	       of states.
+	  Example
+	       C = wordAutomaton({a,b,c}, word {c})
+	       A = cat(C,C)
+	       B = renameStates A
+///
+
+doc ///
+     Key
+          transitionMatrix
+	  (transitionMatrix,Automaton,Thing)
+     Headline
+          transition matrix of an Automaton
+     Usage
+          M = renameStates(A,l)
+     Inputs
+          A:Automaton
+	  l:Thing
+	       element of the alphabet
+     Outputs
+          M:Matrix
+     Description
+          Text
+	       A finite state automaton can be represented by its transition matrices,
+	       one for each element of the alphabet.  The transition matrix for element l
+	       is the adjacency matrix of the directed graph with edges labeled by l.
+	       Equivalently, it is the stochastic matrix that represents the state change
+	       when the letter l is encountered in a word.
+	  Example
+	       A = wordAutomaton({"a","b"}, word "aba")
+	       transitionMatrix(A,"a")
+	       transitionMatrix(A,"b")
 ///
 
 doc ///
@@ -788,13 +864,51 @@ doc ///
           A:Automaton
      Description
           Text
-	       Returns an Automaton that accepts only the singlton words for the letters in U.
+	       Returns an Automaton that accepts only the singleton words for the letters in U.
 	  Example
 	       S = {a,b,c}
 	       A = setAutomaton(S,{a,b})
 	       A {a}
 	       A {c}
 ///
+
+
+doc ///
+     Key
+          kleeneSetAutomaton
+	  (kleeneSetAutomaton,List,List)
+     Headline
+          Automaton corresponding to the Kleene star of a set of letter 
+     Usage
+          A = kleeneSetAutomaton(S,U)
+     Inputs
+          S:List
+	       the alphabet
+	  U:List
+	       a subset of the alphabet
+     Outputs
+          A:Automaton
+     Description
+          Text 
+	       This method returns an automaton equivalent to kleeneStar setAutomaton(S,U).
+	       However, it is implemented to give an automaton which is the smallest possible
+	       for this language. This helps to minimize the size of automatons that
+	       are built using these operations, for example, the automaton associated to
+	       a list of OS^op morphisms.  
+	  Example
+	       S = {a,b,c}
+	       A = kleeneStar setAutomaton(S,{a,b})
+	       peek A
+	       B = kleeneSetAutomaton(S,{a,b})
+	       peek B
+	       A = kleeneStar setAutomaton(S,{a,b,c})
+	       peek A
+	       B = kleeneSetAutomaton(S,{a,b,c})
+	       peek B 
+///
+
+
+
 
 doc ///
     Key
@@ -825,8 +939,7 @@ doc ///
     	NFA2DFA
 	(NFA2DFA, Automaton)
     Headline
-    	transforms a Non-Deterministic Finite Automaton (NFA) into a Deterministic Finite
-	Automaton (DFA). 
+    	transforms a NFA into a DFA. 
     Usage
     	B = NFA2DFA(A)
     Inputs
@@ -836,7 +949,8 @@ doc ///
     	B:Automaton
     Description
     	Text
-	    Given an NFA there is a standard algorithm that transforms it into a DFA.
+	    Given an Non-deterministic Finite Automaton (NFA) there is a standard algorithm that transforms it into a
+	    Deterministic Finite Automaton (DFA).
 	    It works by constructing a new automaton from the power set of the states of the NFA.
 	Example
 	    A= kleeneStar(union(wordAutomaton({a,b}, word {a}),wordAutomaton({a,b}, word {b})))
@@ -873,10 +987,8 @@ automatonHS(B',{1,1})
 A = wordAutomaton({1},word{1})
 B = kleeneSetAutomaton({1},{1})
 AB = cat(A,B)
-AB' = NFA2DFA AB
-ABA = cat(AB',A)
-ABA' = NFA2DFA ABA
-ABAB = cat(ABA',B)
+ABA = cat(AB,A)
+ABAB = cat(ABA,B)
 
 needsPackage "RegularLanguages"
 needsPackage "EquivariantGB"
