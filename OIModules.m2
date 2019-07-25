@@ -365,6 +365,7 @@ oiModuleMap (OIModule, OIModule, List,ZZ) := OIModuleMap => (M,N,l,n) -> (
 
 idOI = method()
 idOI(OIModule) := OIModuleMap => (M) -> (
+)
 
 getImageGensList = method()
 
