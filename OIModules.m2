@@ -314,7 +314,6 @@ OIModule OrderPreservingInjectiveFunction := (Matrix) => (M,ep) -> (
     map(targetModule, sourceModule, ringMatrix)
     )
 
-
 inducedMorphism = method()
 
 -- given a principle projective P_n and an OImorphism ep, the matrix for the induced map
@@ -471,8 +470,8 @@ R = QQ[x,y]
 A = makeOIAlgebra (R)
 F = A^{1,2,4}
 
-tau  = OIMorphism {2,3,4}
-
+tau  = OIMorphism({1,3,4},5)
+getOIBasis(F 5)
 F tau
 -- you can look at the modules you get by applying F to the first few values:
 
