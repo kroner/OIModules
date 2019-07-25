@@ -380,7 +380,7 @@ OIModuleMap ZZ := matrix => (phi, n) -> (
 	   vectors = append(vectors, flatten(entries(imageGenMatrix)));
 	   )	
 	);
-    matrix((getOIAlgebra (phi#(symbol source)))#(symbol ring), vectors)
+    transpose matrix((getOIAlgebra (phi#(symbol source)))#(symbol ring), vectors)
     )
 
 beginDocumentation()
@@ -456,7 +456,7 @@ tau  = OIMorphism {1,3,5,8}
 
 -- net of list of functionVals:
 
-A = makeOIAlgebra (ZZ/2)
+A = makeOIAlgebra (ZZ/101[x,y,z])
 M = A^{1,2,4}
 ep = OIMorphism({1,2,4})
 M ep
@@ -506,15 +506,17 @@ basisList / (e -> net e)
 restart
 installPackage "OIModules"
 
-A = makeOIAlgebra (ZZ/101)
-M = A^{4,5}
-N = A^{2,3}
-N 1
-M 1
-g1 = random(N 4, (ZZ/101)^1)
-g2 = random(N 5, (ZZ/101)^1)
+R = ZZ/101[x,y,z]
+A = makeOIAlgebra (R)
+M = A^{2,3}
+N = A^{1,2}
+
+g1 = map(N 2, R^1, transpose matrix {{x,y,z}})
+g2 = map(N 3, R^1, transpose matrix {{x^2,0,y^2,0,z^2,0}})
+
 phi = OIMap(M,N,{entries g1,entries g2})
 phi 1
 phi 2
+phi 3
 phi 4
 phi 5
