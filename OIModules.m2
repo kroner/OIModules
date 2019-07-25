@@ -38,7 +38,8 @@ export {
     "getWidthList",
     "OIModuleMap",
     "oiModuleMap",
-    "getImageGensList"
+    "getImageGensList",
+    "idOI"
     }
 
 protect \ {widthList,OIAlgebra,OIBasis,imageGensList,Generators,Relations,isFree}
@@ -141,10 +142,10 @@ OIMontoHilbert = L -> (
 -- constructor for OIObject objects
 
 oiObject = method()
-
 oiObject ZZ := OIObject => n -> (
     new OIObject from toList(1..n)
     )
+oiObject OIObject := OIObject => obj -> obj
 
 net OIObject := (obj) -> (
     "[" | (toString length obj) |"]"
@@ -188,18 +189,17 @@ net OIMorphism := (epsilon) -> (
 
 -- get source object
 
-source OIMorphism := oiObject => (epsilon) -> (
+source OIMorphism := OIObject => (epsilon) -> (
     epsilon#(symbol source)
     )
 
 -- get target object
 
-target OIMorphism := oiObject => (epsilon) -> (
+target OIMorphism := OIObject => (epsilon) -> (
     epsilon#(symbol target)
     )
 
 -- apply function to integers
-
 OIMorphism ZZ := ZZ => (ep, n) -> (
     ep#(symbol values)_(n-1)
     )
@@ -307,14 +307,14 @@ OIModule OIObject := Module => (M,n) -> (
 	    underlyingRing := ring getOIAlgebra M;
 	    underlyingRing^nthModuleRank
 	    );
-	if psi =!= null then nthModule = nthModule/(image psi oiObject n);
+	if psi =!= null then nthModule = nthModule/image(psi n);
 	nthModule.cache#(symbol OIBasis) = naturalBasis;
 	M.cache#n = nthModule;
 	nthModule
     	)
     )
 
-OIModule ZZ := Module => (M,n) -> M oiObject n
+OIModule ZZ := Module => (M,n) -> M (oiObject n)
 
 OIModule OIMorphism := (Matrix) => (M,ep) -> (
     sourceModule := M source ep;
@@ -358,7 +358,8 @@ getOIBasis Module := List => (M) -> (
 --number of generators of M
 
 oiModuleMap = method()
-oiModuleMap (OIModule, OIModule, List,ZZ) := OIModuleMap => (M,N,l,n) -> (
+oiModuleMap (OIModule, OIModule, List) := OIModuleMap => (M,N,l) -> (
+    print "hi!";
     new OIModuleMap from {
 	source => M,
 	target => N,
@@ -368,18 +369,27 @@ oiModuleMap (OIModule, OIModule, List,ZZ) := OIModuleMap => (M,N,l,n) -> (
 
 idOI = method()
 idOI(OIModule) := OIModuleMap => (M) -> (
+    R := ring getOIAlgebra M;
+    l := apply(M.widthList, i -> matrix{{1_R}});
+    print l;
+    oiModuleMap(M,M,l)
+    )
 
 getImageGensList = method()
 
 getImageGensList OIModuleMap := List => phi -> phi.imageGensList
-source OIModuleMap := phi -> phi.source
-target OIModuleMap := phi -> phi.target
-    
-OIModuleMap ZZ := matrix => (phi, n) -> (
+source OIModuleMap := phi -> phi#source
+target OIModuleMap := phi -> phi#target
+
+OIModuleMap ZZ := matrix => (phi, n) -> phi (oiObject n)
+OIModuleMap OIObject := matrix => (phi, n) -> (
+    print 1;
     M := source phi;
     N := target phi;
+    print 2;
     if (M n) == 0 then return map(N n, M n, 0);
     if (N n) == 0 then return map(N n, M n, 0);
+    print 3;
     vectors := {};
     widths := getWidthList M;
     imageGens := getImageGensList phi;
@@ -575,12 +585,12 @@ basisList / (e -> net e)
 
 restart
 installPackage "OIModules"
-viewHelp oiMorphism
 
 R = ZZ/101[x,y,z]
 A = makeOIAlgebra (R)
 M = A^{2,3}
 N = A^{1,2}
+idOI N
 N 2
 g1 = map(N 2, R^1, transpose matrix {{x,y,z}})
 g2 = map(N 3, R^1, transpose matrix {{x^2,0,y^2,0,z^2,0}})
