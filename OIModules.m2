@@ -251,67 +251,66 @@ makeOIAlgebra Ring := ConstantOIAlgebra => (K) -> (
     new ConstantOIAlgebra from {symbol ring => K}
     )
 
+ring ConstantOIAlgebra := (A) -> A#(symbol ring)
+
 net ConstantOIAlgebra := (A) -> (
-    "The constant OI-algebra determined by "| net A#(symbol ring)
+    "The constant OI-algebra determined by "| net ring A
     )
 
-ConstantOIAlgebra ^ List := OIModule => (A,l) -> (
+oiModule = method()
+oiModule(ConstantOIAlgebra,List,OIModuleMap,OIModuleMap) := OIModule => (A,l,gns,rels) -> (
     new OIModule from {
-	symbol cache => new MutableHashTable from {},
-	symbol numgens => length l,
-	symbol widthList => l,
-	symbol OIAlgebra => A
+	cache => new MutableHashTable from {},
+	numgens => length l,
+	widthList => l,
+	OIAlgebra => A,
+	generators => gns,
+	relations => rels
 	}
     )
+oiModule(ConstantOIAlgebra,List) := (A,l) -> oiModule(A,l,null,null)
+
+ConstantOIAlgebra ^ List := OIModule => (A,l) -> oiModule(A,l)
 
 getWidthList = method()
-
-getWidthList OIModule := List => (M) -> (
-    M#(symbol widthList)
-    )
+getWidthList OIModule := List => (M) -> M.widthList
 
 getOIAlgebra = method()
-
-getOIAlgebra OIModule := ConstantOIAlgebra => (M) -> (
-    M#(symbol OIAlgebra)
-    )
-
+getOIAlgebra OIModule := ConstantOIAlgebra => (M) -> M.OIAlgebra
 
 OIModule ++ OIModule := OIModule => (M,N) -> (
-    if ((getOIAlgebra M).ring) =!= ((getOIAlgebra N).ring) then
-      error "expected OIModules over the same OIAlgebra";  
-    new OIModule from {
-	symbol cache => hashTable{},
-	symbol numgens => M#(symbol numgens) + N#(symbol numgens),
-	symbol widthList => getWidthList M | getWidthList N	
-	}    
+    A := getOIAlgebra M;
+    if (ring A =!= ring getOIAlgebra N) then
+      error "expected OIModules over the same OIAlgebra";
+    oiModule(A, getWidthList M | getWidthList N) 
     )
 
 OIModule FiniteTotallyOrderedSet := Module => (M,n) -> (
-    if (M#(symbol cache) #? n) then (
- 	M#(symbol cache) # n
-	)
-    else (	
-	naturalBasis := flatten (M#(symbol widthList) / (w -> sort OIHom(OIObject w,n)));
-	nthModuleRank := length naturalBasis;	
-	underlyingRing := M#(symbol OIAlgebra)#(symbol ring);
-	nthModule := underlyingRing^nthModuleRank;
-	nthModule#cache#(symbol OIBasis) = naturalBasis;
-	M#(symbol cache)#n = nthModule;
+    if M.cache #? n then M.cache # n
+    else (
+	phi := M.generators;
+	psi := M.relations;
+	naturalBasis := flatten (M.widthList / (w -> sort OIHom(OIObject w,n)));
+	nthModule := if phi =!= null then image phi OIObject n else (
+	    nthModuleRank := length naturalBasis;	
+	    underlyingRing := ring getOIAlgebra M;
+	    underlyingRing^nthModuleRank
+	    );
+	if psi =!= null then nthModule = nthModule/(image psi OIObject n);
+	nthModule.cache#(symbol OIBasis) = naturalBasis;
+	M.cache#n = nthModule;
 	nthModule
-	)
+    	)
     )
 
-OIModule ZZ := Module => (M,n) -> (
-    M OIObject n
-    )
+OIModule ZZ := Module => (M,n) -> M OIObject n
 
 OIModule OrderPreservingInjectiveFunction := (Matrix) => (M,ep) -> (
     sourceModule := M source ep;
     targetModule := M target ep;
     summandMatrices := M#widthList / (w -> inducedMorphism(ep,w));
     integerMatrix := fold(summandMatrices, (a,b) -> a++b);
-    ringMatrix := sub(integerMatrix, (getOIAlgebra M).ring);
+    ringMatrix := sub(integerMatrix, ring getOIAlgebra M);
     map(targetModule, sourceModule, ringMatrix)
     )
 
@@ -336,51 +335,60 @@ inducedMorphism (OrderPreservingInjectiveFunction,ZZ) := Matrix => (ep,n) -> (
 getOIBasis = method()
 
 getOIBasis Module := List => (M) -> (
-    if (M#cache #? (symbol OIBasis)) then (
-	M#cache# (symbol OIBasis)
+    if (M.cache #? (symbol OIBasis)) then (
+	M.cache# (symbol OIBasis)
 	)
     else (
 	error "Module does not have a cached OIBasis"
 	)
     )
 
-OIMap = method()
-
 --Add a check that the imageGensList is the same length as the 
 --number of generators of M
 
-OIMap (OIModule, OIModule, List) := OIModuleMap => (M,N,l) -> (
+map (OIModule, OIModule, List) := OIModuleMap => (M,N,l) -> (
     new OIModuleMap from {
-	symbol source => M,
-	symbol target => N,
-	symbol imageGensList => l 
+	source => M,
+	target => N,
+	imageGensList => l 
 	}
     )
 
 getImageGensList = method()
 
-getImageGensList OIModuleMap := List => (phi) -> (
-    phi#(symbol imageGensList)
-    )
+getImageGensList OIModuleMap := List => phi -> phi.imageGensList
+source OIModuleMap := phi -> phi.source
+target OIModuleMap := phi -> phi.target
     
 OIModuleMap ZZ := matrix => (phi, n) -> (
-    M := phi#(symbol source);
-    N := phi#(symbol target);
+    M := source phi;
+    N := target phi;
     if (M n) == 0 then return map(N n, M n, 0);
     if (N n) == 0 then return map(N n, M n, 0);
     vectors := {};
-    widths := getWidthList(phi#(symbol source));
+    widths := getWidthList M;
     imageGens := getImageGensList phi;
     for i from 0 to ((length widths)-1) when widths_i < n+1 do (
 	maps := OIHom(widths_i, n);
 	for j from 0 to ((length maps)-1) do (
 	   ep := maps_j;
-	   imageEpMatrix := phi#(symbol target) ep;
+	   imageEpMatrix := N ep;
 	   imageGenMatrix := imageEpMatrix*matrix(imageGens_i);
 	   vectors = append(vectors, flatten(entries(imageGenMatrix)));
 	   )	
 	);
-    transpose matrix((getOIAlgebra (phi#(symbol source)))#(symbol ring), vectors)
+    transpose matrix(ring getOIAlgebra M, vectors)
+    )
+
+
+image OIModuleMap := OIModule => (phi) -> (
+    M := target phi;
+    oiModule(getOIAlgebra M, getWidthList M, phi, null)
+    )
+
+coker OIModuleMap := OIModule => (phi) -> (
+    M := target phi;
+    oiModule(getOIAlgebra M, getWidthList M, null, phi)
     )
 
 beginDocumentation()
