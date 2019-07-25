@@ -882,7 +882,57 @@ doc ///
 	    peek B
 ///
     	
+TEST ///
 
+A = wordAutomaton({a,b,c},word{a,b});
+assert A {a,b};
+assert not A {};
+assert not A {a,b,c};
+assert A "ab";
+///
+
+
+TEST ///
+
+A = setAutomaton({a,b,c},{a,b});
+assert A {a};
+assert  A "b";
+assert not A {"c"};
+assert not A "";
+assert not A "aa";
+///
+
+
+TEST ///
+
+A = setAutomaton({a,b,c},{a,b});
+assert A {a};
+assert  A "b";
+assert not A {"c"};
+assert not A "";
+assert not A "aa";
+///
+
+
+TEST ///
+
+A = kleeneStar wordAutomaton({a,b,c},word{a});
+N = 100;
+w = "";
+scan(N,i-> (assert A w; w = concatenate(w,"a")))
+assert not A concatenate(w,"b")
+///
+
+
+TEST ///
+R = frac(QQ[t]);
+n = 100;
+A = kleeneStar setAutomaton (toList (1..n),toList (1..n));
+B = kleeneSetAutomaton (toList (1..n),toList (1..n));
+weights = toList (n:t);
+assert (automatonHS (A,weights) == automatonHS(B,weights))
+automatonHS (A,weights)
+///
 end
 ----------
 
@@ -968,4 +1018,8 @@ B = kleeneStar(B)
 A = cat(A,B)
 
 kleeneStar(union(wordAutomaton({a,b},word{a}),wordAutomaton({a,b},word{b})))
+
+
+A = setAutomaton(S,{1})
+automatonHS A
 
