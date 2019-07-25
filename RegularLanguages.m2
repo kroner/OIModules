@@ -289,13 +289,14 @@ kleeneSetAutomaton(List,List) := (S,U) -> (
 surjToAutomaton = method()
 surjToAutomaton List := f -> (
     m:=length f;
+    if m==0 or f_0!=1 then error "expected an ordered surjection.";
     val:=sort unique f;
     seen:=1;
     ans:=cat(wordAutomaton(val, word{f_0}), kleeneSetAutomaton(val,{1}));
     for i from 1 to m-1 do (
 	ans = cat(ans, wordAutomaton(val, word{f_i}));
 	if f_i > seen then 
-	if f_i > seen+1 then error "Input is not an ordered surjection."
+	if f_i > seen+1 then error "expected an ordered surjection."
 	else seen=seen+1;
     	ans = cat(ans, kleeneSetAutomaton(val,toList(1..seen)));
 	);
