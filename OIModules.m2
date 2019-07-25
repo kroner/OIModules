@@ -51,6 +51,7 @@ ConstantOIAlgebra = new Type of HashTable
 OIModule = new Type of HashTable
 OIModuleElement = new Type of VisibleList
 OIModuleMap = new Type of HashTable  
+
 -----------------------
 -- Type constructors --
 -----------------------
@@ -507,3 +508,4 @@ N = A^{1}
 phi = OIMap(M,N,{1})
 phi 1
 
+restart
