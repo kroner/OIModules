@@ -22,6 +22,7 @@ newPackage( "OIModules",
     AuxiliaryFiles => false)
 
 export {
+    "oiMonomialsToHilbert",
     "OIInitial",
     "OIObject",
     "OIMorphism",
@@ -264,8 +265,26 @@ OIGroebner = L ->(
 
 		     
         
-
-
+oiMonomialsToHilbert = L ->(
+    basecase:= L_0;
+    basemorphism := (keys basecase)_0;
+    n := #source basemorphism;
+    R := QQ; --TO BE REPLACED BY ARBITRARY RING
+    x := getSymbol "x";
+    S := R[x_0..x_n];
+    temp := {};
+    for mon in L do(
+	tempmonomial :=1;
+	t := (keys mon)_0;
+	m := #(target t);
+	tempmonomial = tempmonomial*(S_0)^(t(1)-1)*(S_n)^(m-t(n));
+	for i from 1 to n-1 do tempmonomial = tempmonomial*(S_i)^(t(i+1)-t(i)-1);
+	temp = append(temp,tempmonomial);
+	);
+    I := ideal(temp);
+    return hilbertSeries I)
+    
+    
 -- constructor for OIElements
 
 OrderPreservingInjectiveFunction == OrderPreservingInjectiveFunction := (a,b) ->(
