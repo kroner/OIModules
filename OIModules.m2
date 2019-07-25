@@ -22,8 +22,8 @@ newPackage( "OIModules",
     AuxiliaryFiles => false)
 
 export {
-    "OIObject",
-    "OIMorphism",
+    "oiObject",
+    "oiMorphism",
     "OIHom",
     "OIElement",
     "OIMonomialtoMonomial",
@@ -45,8 +45,8 @@ protect \ {widthList,OIAlgebra,OIBasis,imageGensList}
 -- New types --
 ---------------
 
-FiniteTotallyOrderedSet = new Type of VisibleList
-OrderPreservingInjectiveFunction = new Type of HashTable
+OIObject = new Type of VisibleList
+OIMorphism = new Type of HashTable
 ConstantOIAlgebra = new Type of HashTable
 OIModule = new Type of HashTable
 OIModuleElement = new Type of VisibleList
@@ -134,41 +134,41 @@ OIMontoHilbert = L -> (
 	
 	
 
--- constructor for FiniteTotallyOrderedSet objects
+-- constructor for OIObject objects
 
-OIObject = method()
+oiObject = method()
 
-OIObject ZZ := FiniteTotallyOrderedSet => n -> (
-    new FiniteTotallyOrderedSet from toList(1..n)
+oiObject ZZ := OIObject => n -> (
+    new OIObject from toList(1..n)
     )
 
-net FiniteTotallyOrderedSet := (obj) -> (
+net OIObject := (obj) -> (
     "[" | (toString length obj) |"]"
     )
 
-toString FiniteTotallyOrderedSet := (obj) -> (
+toString OIObject := (obj) -> (
     toString net obj
     )
 
-OIMorphism = method()
+oiMorphism = method()
 
-OIMorphism List := OrderPreservingInjectiveFunction => (l) -> (
-    new OrderPreservingInjectiveFunction from {
-	symbol source => OIObject length l,
-	symbol target => OIObject max l,
+oiMorphism List := OIMorphism => (l) -> (
+    new OIMorphism from {
+	symbol source => oiObject length l,
+	symbol target => oiObject max l,
 	symbol values => l
 	}
     )
 
-OIMorphism (List,ZZ) := OrderPreservingInjectiveFunction => (l,n) -> (
-    new OrderPreservingInjectiveFunction from {
-	symbol source => OIObject length l,
-	symbol target => OIObject n,
+oiMorphism (List,ZZ) := OIMorphism => (l,n) -> (
+    new OIMorphism from {
+	symbol source => oiObject length l,
+	symbol target => oiObject n,
 	symbol values => l
 	}
     )
 
-net OrderPreservingInjectiveFunction := (epsilon) -> (
+net OIMorphism := (epsilon) -> (
     vals := epsilon#(symbol values);
     if (length vals == 0) then (
 	net 0
@@ -184,27 +184,27 @@ net OrderPreservingInjectiveFunction := (epsilon) -> (
 
 -- get source object
 
-source OrderPreservingInjectiveFunction := OIObject => (epsilon) -> (
+source OIMorphism := oiObject => (epsilon) -> (
     epsilon#(symbol source)
     )
 
 -- get target object
 
-target OrderPreservingInjectiveFunction := OIObject => (epsilon) -> (
+target OIMorphism := oiObject => (epsilon) -> (
     epsilon#(symbol target)
     )
 
 -- apply function to integers
 
-OrderPreservingInjectiveFunction ZZ := ZZ => (ep, n) -> (
+OIMorphism ZZ := ZZ => (ep, n) -> (
     ep#(symbol values)_(n-1)
     )
 
 -- function composition
 
-OrderPreservingInjectiveFunction OrderPreservingInjectiveFunction := OrderPreservingInjectiveFunction => (epsilon, tau) -> (
+OIMorphism OIMorphism := OIMorphism => (epsilon, tau) -> (
     composedVals := (toList source tau) / (i -> tau i) / (j -> epsilon j);
-    new OrderPreservingInjectiveFunction from {
+    new OIMorphism from {
 	symbol source => source tau,
 	symbol target => target epsilon,
 	symbol values => composedVals
@@ -213,7 +213,7 @@ OrderPreservingInjectiveFunction OrderPreservingInjectiveFunction := OrderPreser
 
 -- compare morphisms in OI
 
-OrderPreservingInjectiveFunction ? OrderPreservingInjectiveFunction := (ep, tau) -> (
+OIMorphism ? OIMorphism := (ep, tau) -> (
     if source ep != source tau then (
 	symbol incomparable
 	)
@@ -227,7 +227,7 @@ OrderPreservingInjectiveFunction ? OrderPreservingInjectiveFunction := (ep, tau)
 	)
     )
 
-OrderPreservingInjectiveFunction == OrderPreservingInjectiveFunction := Boolean => (ep, tau) -> (
+OIMorphism == OIMorphism := Boolean => (ep, tau) -> (
     if (source ep == source tau and target ep == target tau and ep#(symbol values) == tau#(symbol values)) then (
 	true
 	) else (
@@ -237,12 +237,12 @@ OrderPreservingInjectiveFunction == OrderPreservingInjectiveFunction := Boolean 
 
 OIHom = method()
 
-OIHom (FiniteTotallyOrderedSet, FiniteTotallyOrderedSet) := List => (ob1, ob2) -> (
-    subsets(toList ob2, length ob1) / (l -> OIMorphism(l,length ob2))
+OIHom (OIObject, OIObject) := List => (ob1, ob2) -> (
+    subsets(toList ob2, length ob1) / (l -> oiMorphism(l,length ob2))
     )
 
 OIHom (ZZ,ZZ) := List => (m,n) -> (
-    OIHom(OIObject m, OIObject n)
+    OIHom(oiObject m, oiObject n)
     )
 
 makeOIAlgebra = method()
@@ -294,27 +294,27 @@ OIModule ++ OIModule := OIModule => (M,N) -> (
     oiModule(A, getWidthList M | getWidthList N) 
     )
 
-OIModule FiniteTotallyOrderedSet := Module => (M,n) -> (
+OIModule OIObject := Module => (M,n) -> (
     if M.cache #? n then M.cache # n
     else (
 	phi := M.generators;
 	psi := M.relations;
-	naturalBasis := flatten (M.widthList / (w -> sort OIHom(OIObject w,n)));
-	nthModule := if phi =!= null then image phi OIObject n else (
+	naturalBasis := flatten (M.widthList / (w -> sort OIHom(oiObject w,n)));
+	nthModule := if phi =!= null then image phi oiObject n else (
 	    nthModuleRank := length naturalBasis;	
 	    underlyingRing := ring getOIAlgebra M;
 	    underlyingRing^nthModuleRank
 	    );
-	if psi =!= null then nthModule = nthModule/(image psi OIObject n);
+	if psi =!= null then nthModule = nthModule/(image psi oiObject n);
 	nthModule.cache#(symbol OIBasis) = naturalBasis;
 	M.cache#n = nthModule;
 	nthModule
     	)
     )
 
-OIModule ZZ := Module => (M,n) -> M OIObject n
+OIModule ZZ := Module => (M,n) -> M oiObject n
 
-OIModule OrderPreservingInjectiveFunction := (Matrix) => (M,ep) -> (
+OIModule OIMorphism := (Matrix) => (M,ep) -> (
     sourceModule := M source ep;
     targetModule := M target ep;
     summandMatrices := M#widthList / (w -> inducedMorphism(ep,w));
@@ -328,9 +328,9 @@ inducedMorphism = method()
 -- given a principle projective P_n and an OImorphism ep, the matrix for the induced map
 -- P_n(b) <- P_n(a) (here, ep is a morphisms from [a] to [b])
 
-inducedMorphism (OrderPreservingInjectiveFunction,ZZ) := Matrix => (ep,n) -> (
-    sourceBasis := sort OIHom(OIObject n, source ep);
-    targetBasis := sort OIHom(OIObject n, target ep);
+inducedMorphism (OIMorphism,ZZ) := Matrix => (ep,n) -> (
+    sourceBasis := sort OIHom(oiObject n, source ep);
+    targetBasis := sort OIHom(oiObject n, target ep);
     matrixEntriesFunction := (i,j) -> (
 	if (ep sourceBasis_j == targetBasis_i) then (
 	    1
@@ -361,6 +361,12 @@ map (OIModule, OIModule, List) := OIModuleMap => (M,N,l) -> (
 	target => N,
 	imageGensList => l 
 	}
+    )
+
+id_OIModule := OIModuleMap => (M) -> (
+    R := ring getOIAlgebra M;
+    l := apply(M.widthList, l -> matrix{{1_R}});
+    map(M,M,l)
     )
 
 getImageGensList = method()
@@ -419,13 +425,13 @@ end
 
 restart
 installPackage "OIModules"
-FiniteTotallyOrderedSet
+OIObject
 OIModuleElement
 List
-M={{1,OIMorphism({1,2,9})}}
+M={{1,oiMorphism({1,2,9})}}
 M_0_1
-OIMorphism
-OIMorphism {1}
+oiMorphism
+oiMorphism {1}
 
 
 
@@ -433,11 +439,11 @@ m = OIElement M
 m
 OIMonomials m
 for i in m do print i_1
-ob1 = OIObject 3
-ob2 = OIObject 6
+ob1 = oiObject 3
+ob2 = oiObject 6
 OIHom(ob1, ob2)
-ep = OIMorphism {1,2,4}
-tau  = OIMorphism {1,3,5,8}
+ep = oiMorphism {1,2,4}
+tau  = oiMorphism {1,3,5,8}
 
 
 -- operator precedece
@@ -454,8 +460,8 @@ tau  = OIMorphism {1,3,5,8}
 
 --quit
 --installPackage "OIModules"
---M = OIMorphism{1,4,7,11,15,17,18}
---N = OIMorphism({1,2,3,5,7,9,18})
+--M = oiMorphism{1,4,7,11,15,17,18}
+--N = oiMorphism({1,2,3,5,7,9,18})
 --S = OIElement{{1,M}}
 --T = OIElement{{1,N}}
 --OIMontoHilbert({S})
@@ -475,9 +481,9 @@ tau  = OIMorphism {1,3,5,8}
 
 A = makeOIAlgebra (ZZ/101[x,y,z])
 M = A^{1,2,4}
-ep = OIMorphism({1,2,4})
+ep = oiMorphism({1,2,4})
 M ep
-ob1 = OIObject 4
+ob1 = oiObject 4
 F = M ob1
 naturalBasis = getOIBasis F
 naturalBasis / (e -> net e)
@@ -492,7 +498,7 @@ R = QQ[x,y]
 A = makeOIAlgebra (R)
 F = A^{1,2,4}
 
-tau  = OIMorphism({1,3,4},5)
+tau  = oiMorphism({1,3,4},5)
 getOIBasis(F 5)
 F tau
 -- you can look at the modules you get by applying F to the first few values:
@@ -503,7 +509,7 @@ apply(testList, i -> F i)
 
 -- or get a particular one:
 
-ob3 = OIObject 5
+ob3 = oiObject 5
 M = F ob3 
 
 -- now M is almost an ordinary M2 object.
