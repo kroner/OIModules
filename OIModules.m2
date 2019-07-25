@@ -297,8 +297,8 @@ OIModule ++ OIModule := OIModule => (M,N) -> (
 OIModule FiniteTotallyOrderedSet := Module => (M,n) -> (
     if M.cache #? n then M.cache # n
     else (
-	phi := M.generators;
-	psi := M.relations;
+	phi := M#generators;
+	psi := M#relations;
 	naturalBasis := flatten (M.widthList / (w -> sort OIHom(OIObject w,n)));
 	nthModule := if phi =!= null then image phi OIObject n else (
 	    nthModuleRank := length naturalBasis;	
@@ -525,13 +525,14 @@ installPackage "OIModules"
 
 R = ZZ/101[x,y,z]
 A = makeOIAlgebra (R)
-M = oiModule(A,{2,3},null,null)
+M = A^{2,3}
 N = A^{1,2}
-
+N 2
 g1 = map(N 2, R^1, transpose matrix {{x,y,z}})
 g2 = map(N 3, R^1, transpose matrix {{x^2,0,y^2,0,z^2,0}})
 
-phi = OIMap(M,N,{entries g1,entries g2})
+phi = map(M,N,{entries g1,entries g2})
+
 phi 1
 phi 2
 phi 3
