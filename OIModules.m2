@@ -365,12 +365,13 @@ map (OIModule, OIModule, List) := OIModuleMap => (M,N,l) -> (
 	imageGensList => l 
 	}
     )
-
-id_OIModule := OIModuleMap => (M) -> (
+-*
+id _ OIModule := OIModuleMap => (M) -> (
     R := ring getOIAlgebra M;
     l := apply(M.widthList, l -> matrix{{1_R}});
     map(M,M,l)
     )
+*-
 
 getImageGensList = method()
 
@@ -425,47 +426,47 @@ doc ///
 
 doc ///
     Key
-    	OIMorphism
-	(OIMorphism,List)
-	(OIMorphism,List,ZZ)
+    	oiMorphism
+	(oiMorphism,List)
+	(oiMorphism,List,ZZ)
     Headline
     	Used for creating morphisms in the category OI.
     Usage
-    	epsilon = OIMorphism(images)
-	epsilon = OIMorphism(images, n)
+    	epsilon = oiMorphism(images)
+	epsilon = oiMorphism(images, n)
     Inputs
     	images:List
 	    A list, specifying the images of the elements in the source.
 	n:ZZ
 	    A non-negative integer specifying the target of the morphism if the one inferred from the list of images is not correct.
     Outputs
-    	epsilon:OrderPreservingInjectiveFunction
+    	epsilon:OIMorphism
     Description
     	Text
-    	    A morphism $\epsilon: [n] \rightarrow [m]$ in the category OI is determined by the list of values $\{\epsilon(1), \epsilon(2), \ldots, \epsilon(n)\}$ as well as the target $[m]$. The constructor OIMorphism takes inputs specifying these data and produces @ofClass OrderPreservingInjectiveFunction@. If a target is not specified, the minimal target is inferred from the list of images.
+    	    A morphism $\epsilon: [n] \rightarrow [m]$ in the category OI is determined by the list of values $\{\epsilon(1), \epsilon(2), \ldots, \epsilon(n)\}$ as well as the target $[m]$. The constructor OIMorphism takes inputs specifying these data and produces @ofClass OIMorphism@. If a target is not specified, the minimal target is inferred from the list of images.
 	Example
-	    epsilon = OIMorphism({1,4,5}, 7)
-	    tau = OIMorphism({1,3,4,5,7,8,9})
+	    epsilon = oiMorphism({1,4,5}, 7)
+	    tau = oiMorphism({1,3,4,5,7,8,9})
 	Text
-	    One can ask for the source or target of @ofClass OrderPreservingInjectiveFunction@. Morphisms can be composed if their sources and targets are compatible, and they can be applied to @ofClass ZZ@ in their domain.
+	    One can ask for the source or target of @ofClass OIMorphism@. Morphisms can be composed if their sources and targets are compatible, and they can be applied to @ofClass ZZ@ in their domain.
 	Example
 	    target epsilon
 	    source tau
 	    tau	epsilon
 	    epsilon 2
     	Text
-	    The collection of all OrderPreservingInjectiveFunctions between two OIObjects can be found using OIHom
+	    The collection of all OIMorphisms between two OIObjects can be found using OIHom
 	Example
-	    sourceObj = OIObject 2;
-	    targetObj = OIObject 4;
+	    sourceObj = oiObject 2;
+	    targetObj = oiObject 4;
 	    OIHom (sourceObj, targetObj)
         Text
-	    The net used to represent @ofClass OrderPreservingInjectiveFunction@ is the strings representing the images of the function, concatenated in order. This can lead to notational ambiguities where distinct morphism are printed with identical strings.
+	    The net used to represent @ofClass OIMorphism@ is the strings representing the images of the function, concatenated in order. This can lead to notational ambiguities where distinct morphism are printed with identical strings.
 	Example
-	    epsilon1 = OIMorphism {1,2,3,4}
-	    epsilon2 = OIMorphism ({1,2,3,4},5)
-	    epsilon3 = OIMorphism {12,34}
-	    epsilon4 = OIMorphism {1,234}
+	    epsilon1 = oiMorphism {1,2,3,4}
+	    epsilon2 = oiMorphism ({1,2,3,4},5)
+	    epsilon3 = oiMorphism {12,34}
+	    epsilon4 = oiMorphism {1,234}
 	Text
 	    Such concise notation was chosen because these objects are typically used as indices for @ofClass IndexedVariable@, where their primary purpose is bookkeeping for OI-algebras.
 ///
@@ -578,7 +579,8 @@ basisList / (e -> net e)
 
 restart
 installPackage "OIModules"
-viewHelp OIMorphism
+viewHelp oiMorphism
+
 R = ZZ/101[x,y,z]
 A = makeOIAlgebra (R)
 M = A^{2,3}
