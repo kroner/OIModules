@@ -174,7 +174,10 @@ cat(Automaton,Automaton) := Automaton => (A,B) -> (
 	matrix{{A.transitions#l, map(ZZ^n,ZZ^m,0)},{C, B.transitions#l}}
 	);
     Acc := apply(toList B.accepts, state->n+position(B.states,st->st===state));
-    if member(B.initial, B.accepts) then Acc = Acc|(toList A.accepts);
+    if member(B.initial, B.accepts) then (
+	AccA := apply(toList A.accepts, state->position(A.states,st->st===state));
+	Acc = Acc|AccA;
+	);
     D := automaton(S,n+m,Mats,Acc);
     NFA2DFA D
     )
@@ -687,11 +690,13 @@ doc ///
 doc ///
      Key
           automatonHS
+	  (automatonHS,Automaton)
 	  (automatonHS,Automaton,List)
      Headline
           generating function of an automaton
      Usage
-          f = automatonHS(A,W)
+          f = automatonHS(A)
+	  f = automatonHS(A,W)
      Inputs
           A:Automaton
 	  W:List
@@ -703,12 +708,17 @@ doc ///
 	       Produces the generating function of the language accepted by the automaton
 	       with weights W.  W should have a weight for each element of the alphabet,
 	       and the weights should be elements of a fraction field.
+	       
+	       If W is not specified, then the default behavior is to use the variable t in frac(QQ[t])
 	  Example
 	       S = {a,b}
 	       Mats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
 	       A = automaton({a,b},3,Mats,{2})
-	       T = frac(QQ[t])
-	       f = automatonHS(A,{t,t})
+	       f = automatonHS(A)
+	       factor(f)
+	       T = frac(QQ[x,y])
+	       g = automatonHS(A,{x,y})
+	       factor(g)
      Caveat
           Applying this function to nondeterministic automata may give incorrect results.
 ///
@@ -898,9 +908,12 @@ B' {a,a,b,b}
 automatonHS(B',{1,1})
 
 A = wordAutomaton({1},word{1})
-B = kleeneStar A
-C = cat(A,B)
-
+B = kleeneSetAutomaton({1},{1})
+AB = cat(A,B)
+AB' = NFA2DFA AB
+ABA = cat(AB',A)
+ABA' = NFA2DFA ABA
+ABAB = cat(ABA',B)
 
 needsPackage "RegularLanguages"
 needsPackage "EquivariantGB"
