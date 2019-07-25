@@ -687,11 +687,13 @@ doc ///
 doc ///
      Key
           automatonHS
+	  (automatonHS,Automaton)
 	  (automatonHS,Automaton,List)
      Headline
           generating function of an automaton
      Usage
-          f = automatonHS(A,W)
+          f = automatonHS(A)
+	  f = automatonHS(A,W)
      Inputs
           A:Automaton
 	  W:List
@@ -703,12 +705,17 @@ doc ///
 	       Produces the generating function of the language accepted by the automaton
 	       with weights W.  W should have a weight for each element of the alphabet,
 	       and the weights should be elements of a fraction field.
+	       
+	       If W is not specified, then the default behavior is to use the variable t in frac(QQ[t])
 	  Example
 	       S = {a,b}
 	       Mats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
 	       A = automaton({a,b},3,Mats,{2})
-	       T = frac(QQ[t])
-	       f = automatonHS(A,{t,t})
+	       f = automatonHS(A)
+	       factor(f)
+	       T = frac(QQ[x,y])
+	       g = automatonHS(A,{x,y})
+	       factor(g)
      Caveat
           Applying this function to nondeterministic automata may give incorrect results.
 ///
