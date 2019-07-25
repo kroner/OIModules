@@ -39,7 +39,6 @@ protect \ {arrows, accepts, states, alphabet, initial, transitions, deterministi
 --Types
 Automaton = new Type of HashTable
 Word = new Type of List
---RegularLanguage = new Type of HashTable
 
 --Methods
 
@@ -132,7 +131,7 @@ net Automaton := A -> (
     "Automaton on states "|net(A.states)
     )
 
-
+--complement = method()
 complement(Automaton) := Automaton => A -> (
     H := new MutableHashTable from A;
     H.accepts = set(A.states) - A.accepts;
@@ -151,7 +150,7 @@ intersection(Automaton,Automaton) := Automaton => (A,B) -> (
 	    l => productList(A.arrows#(state#0)#l, B.arrows#(state#1)#l)
 	    )
 	);
-    	automaton(S,sts,ars,Acc)
+    automaton(S,sts,ars,Acc)
     )	 
 
 union = method()
@@ -274,8 +273,7 @@ kleeneSetAutomaton(List,List) := (S,U) -> (
     junk:=hashTable apply(S,i->(i=>{1}));
     hash0 := hashTable apply(S, i-> if member(i,U) then (i=>{0}) else (i=>{1}));
     ars:= hashTable {0 => hash0, 1=>junk, 2=>junk};
-    trim automaton(S,{0,1},ars,{0})
-    
+    trim automaton(S,{0,1},ars,{0})    
     )
 
 
@@ -433,18 +431,18 @@ NFA2DFA(Automaton) := aut -> (
 
 beginDocumentation()
 
-doc ///
+multidoc ///
+Node
      Key
           RegularLanguages
      Headline
-          A package for regular languages and their Hilbert series
+          A package for regular languages and their generating functions
      Description
           Text
-	       Do regular language stuff.
+	       This package implements all of the basic operations of regular languages which are represented by finite state automata. 
+	       It also computes the generating function of a regular language, where each letter can be given a weight.
           
-///
-
-doc ///
+Node 
      Key
           Automaton
 	  (symbol SPACE,Automaton,List)
@@ -455,7 +453,7 @@ doc ///
           the class of finite state automata
      Description
           Text
-	       Can represent a deterministic or nondeterinistic automaton.
+	       Can represent a deterministic or nondeterministic automaton.
 	       
 	       The following example makes an automaton that only accepts the word aab.
 	  Example
@@ -463,9 +461,8 @@ doc ///
 	       B = wordAutomaton(S, word "aab")
 	       B "aab"
 	       B "aabb"
-///
 
-doc ///
+Node
      Key
           automaton
 	  (automaton,List,List,HashTable,Set)
@@ -525,9 +522,8 @@ doc ///
 	       A = automaton({"a","b"},3,tmats,{2})
 	       A "abaababa"
 	       A "bb"
-///
 
-doc ///
+Node
      Key
           Word
      Headline
@@ -540,9 +536,9 @@ doc ///
 	       w = word {a,a,a}
 	       A = wordAutomaton(S, w)
 	       A w
-///
 
-doc ///
+
+Node
      Key
           word
 	  (word,String)
@@ -566,9 +562,8 @@ doc ///
 	       A = wordAutomaton({"a","b","c"}, w)
 	       u = word {a,a,a}
 	       A u
-///
 
-doc ///
+Node
      Key
 	  (trim,Automaton)
      Headline
@@ -586,9 +581,8 @@ doc ///
 	       tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
 	       A = automaton({0,1},3,tmats,{1,2})
 	       B = trim A
-///
 
-doc ///
+Node
      Key
           renameStates
 	  (renameStates,Automaton)
@@ -612,9 +606,8 @@ doc ///
 	       C = wordAutomaton({a,b,c}, word {c})
 	       A = cat(C,C)
 	       B = renameStates A
-///
 
-doc ///
+Node
      Key
           transitionMatrix
 	  (transitionMatrix,Automaton,Thing)
@@ -639,11 +632,10 @@ doc ///
 	       A = wordAutomaton({"a","b"}, word "aba")
 	       transitionMatrix(A,"a")
 	       transitionMatrix(A,"b")
-///
 
-doc ///
+Node
      Key
-	  (complement,Automaton)
+	 (complement,Automaton)
      Headline
           Automaton for the complement language
      Usage
@@ -663,9 +655,8 @@ doc ///
 	       B {a,a}
      Caveat
           Applying this function to nondeterministic automata may give incorrect results.
-///
 
-doc ///
+Node
      Key
           union
 	  (union,Automaton,Automaton)
@@ -688,9 +679,8 @@ doc ///
 	       B = wordAutomaton(S, word {b,b})
 	       C = union(A,B)
 	       C {a,a}
-///
 
-doc ///
+Node
      Key
      	  intersection
 	  (intersection,Automaton,Automaton)
@@ -713,9 +703,8 @@ doc ///
 	       B = kleeneStar(wordAutomaton(S, word {b,b}))
 	       C = intersection(A,B)
 	       C ""
-///
 
-doc ///
+Node
      Key
           cat
 	  (cat,Automaton,Automaton)
@@ -738,9 +727,8 @@ doc ///
 	       B = wordAutomaton(S, word {b,b})
 	       C = cat(A,B)
 	       C {a,a,b,b}
-///
 
-doc ///
+Node
      Key
           kleeneStar
 	  (kleeneStar,Automaton)
@@ -762,9 +750,8 @@ doc ///
 	       B = kleeneStar A
 	       B {a,a,a,a}
 	       B {}
-///
 
-doc ///
+Node
      Key
           automatonHS
 	  (automatonHS,Automaton)
@@ -798,12 +785,13 @@ doc ///
 	       factor(g)
      Caveat
           Applying this function to nondeterministic automata may give incorrect results.
-///
 
-doc ///
+Node
      Key
           isDeterministic
 	  (isDeterministic,Automaton)
+     Headline
+     	 Tests if an automaton is deterministic
      Usage
           b = isDeterministic(A)
      Inputs
@@ -815,13 +803,12 @@ doc ///
 	       Returns whether the automaton is deterministic (one arrow per letter from each
 	       state) or nondeterministic (possibly more arrows per letter).
 	  Example
-	       S = {a,b}
 	       Mats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
-	       A = automaton({a,b},3,Mats,{2})
-	       isDeterministic A
-///
+	       isDeterministic(automaton({a,b},3,Mats,{2}))
+	       Mats2 = {matrix{{1,1,0},{1,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
+	       isDeterministic(automaton({a,b},3,Mats2,{2}))
 
-doc ///
+Node
      Key
           wordAutomaton
 	  (wordAutomaton,List,Word)
@@ -845,9 +832,8 @@ doc ///
 	       A = wordAutomaton(S,w)
 	       A w
 	       A {a,a,b,b}
-///
 
-doc ///
+Node
      Key
           setAutomaton
 	  (setAutomaton,List,List)
@@ -870,10 +856,8 @@ doc ///
 	       A = setAutomaton(S,{a,b})
 	       A {a}
 	       A {c}
-///
 
-
-doc ///
+Node
      Key
           kleeneSetAutomaton
 	  (kleeneSetAutomaton,List,List)
@@ -905,12 +889,8 @@ doc ///
 	       peek A
 	       B = kleeneSetAutomaton(S,{a,b,c})
 	       peek B 
-///
 
-
-
-
-doc ///
+Node
     Key
     	surjectionToAutomaton
 	(surjectionToAutomaton, List)
@@ -928,13 +908,18 @@ doc ///
 	    The monomials in a monomial submodule of a principal projective OS^{op}-module P_n 
 	    can be encoded by a regular sequence in the alphabet {1..n}. This method constructs
 	    the corresponding DFA.
+	    
+	    A list represents an ordered surjection if for each i<j, the first instance of i 
+	    appears before the first instance of j. The monomials generated by a particular list
+	    \{a_1,...,a_n\} is the language a_1 S_1^* .. a_n S_n^* where S_i = \{a_1,...,a_i\}.
+	    
+	    This will return an error if any of the inputs is not an ordered surjection.
 	Example
 	    A=surjectionToAutomaton({{1}})
 	    use frac(QQ[t])
 	    automatonHS(A,{t})
-///
 
-doc ///
+Node
     Key
     	NFA2DFA
 	(NFA2DFA, Automaton)
