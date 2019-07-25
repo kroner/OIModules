@@ -356,8 +356,8 @@ getOIBasis Module := List => (M) -> (
 oiModuleMap = method()
 oiModuleMap (OIModule, OIModule, List) := OIModuleMap => (M,N,l) -> (
     new OIModuleMap from {
-	symbol source => M,
-	symbol target => N,
+	source => M,
+	target => N,
 	imageGensList => l 
 	}
     )
@@ -472,11 +472,11 @@ doc ///
 
 doc ///
     Key
-    	oiMap
+    	oiModuleMap
     Headline
     	Used for creating a map between free OI-modules.
     Usage
-    	phi = oiMap(M,N,v)
+    	phi = oiModuleMap(M,N,v)
     Inputs
     	M:OIModule
 	    A free OI-module specifying the source of the map
@@ -496,7 +496,7 @@ doc ///
 	    N = A^{1,2}
 	    v1 = transpose (matrix {{1,0,1}})
 	    v2 = transpose (matrix {{x^2,0,y^2,0,z^2,0}})
-	    phi = oiMap(M,N,{v1,v2})
+	    phi = oiModuleMap(M,N,{v1,v2})
 	Text
 	    One can ask for the source or target of @ofClass OIModuleMap@. One can also get the list of vectors specifying the images of the generators of the source free module.
 	Example
