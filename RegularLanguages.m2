@@ -224,6 +224,13 @@ automatonHS(Automaton,List) := (A,weights) -> (
     first flatten entries (u*(inverse N)*v)
     )
 
+automatonHS(Automaton) := A -> (
+    n:=#(A.alphabet);
+    T:=frac(QQ[t]);
+    use T;
+    automatonHS(A,apply(n,i->t))
+    )
+
 -- remove unreachable states from an automaton
 trim Automaton := o -> A -> (
     S := A.alphabet;
@@ -805,10 +812,37 @@ doc ///
 	    automatonHS(A,{t})
 ///
 
+doc ///
+    Key
+    	NFA2DFA
+	(NFA2DFA, Automaton)
+    Headline
+    	transforms a Non-Deterministic Finite Automaton (NFA) into a Deterministic Finite
+	Automaton (DFA). 
+    Usage
+    	B = NFA2DFA(A)
+    Inputs
+	A:Automaton
+	    Automaton
+    Outputs
+    	B:Automaton
+    Description
+    	Text
+	    Given an NFA there is a standard algorithm that transforms it into a DFA.
+	    It works by constructing a new automaton from the power set of the states of the NFA.
+	Example
+	    A= kleeneStar(union(wordAutomaton({a,b}, word {a}),wordAutomaton({a,b}, word {b})))
+	    peek A
+	    B = NFA2DFA A
+	    peek B
+///
+    	
+
 end
 ----------
 
 restart
+loadPackage "RegularLanguages"
 installPackage "RegularLanguages"
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
 A = automaton({a,b},3,tmats,{2}) -- accepts words with two b's in a row
