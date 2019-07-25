@@ -268,7 +268,16 @@ oiModule(ConstantOIAlgebra,List,OIModuleMap,OIModuleMap) := OIModule => (A,l,gns
 	relations => rels
 	}
     )
-oiModule(ConstantOIAlgebra,List) := (A,l) -> oiModule(A,l,null,null)
+oiModule(ConstantOIAlgebra,List) := (A,l) -> (
+    new OIModule from {
+	cache => new MutableHashTable from {},
+	numgens => length l,
+	widthList => l,
+	OIAlgebra => A,
+	generators => null,
+	relations => null
+	}
+    )
 
 ConstantOIAlgebra ^ List := OIModule => (A,l) -> oiModule(A,l)
 
