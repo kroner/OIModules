@@ -364,19 +364,19 @@ getImageGensList OIModuleMap := List => (phi) -> (
     )
     
 OIModuleMap ZZ := matrix => (phi, n) -> (
-    testVector := {1};
     vectors := {};
     widths := getWidthList(phi#(symbol source));
     imageGens := getImageGensList phi;
     for i from 0 to ((length widths)-1) when widths_i < n+1 do (
 	maps := OIHom(widths_i, n);
-	for i from 0 to ((length maps)-1) do (
-	   -- vectors = append(vectors, (N maps_i) imageGens_i)
-	   vectors = append(vectors, testVector)	    
-	    )	
+	for j from 0 to ((length maps)-1) do (
+	   ep := maps_j;
+	   imageEpMatrix := phi#(symbol target) ep;
+	   imageGenMatrix := imageEpMatrix*matrix(imageGens_i);
+	   vectors = append(vectors, flatten(entries(imageGenMatrix)));
+	   )	
 	);
     matrix((getOIAlgebra (phi#(symbol source)))#(symbol ring), vectors)
-    --matrix(vectors)
     )
 
 beginDocumentation()
@@ -502,9 +502,10 @@ basisList / (e -> net e)
 restart
 installPackage "OIModules"
 
-A = makeOIAlgebra (ZZ/2)
-M = A^{1}
-N = A^{1}
-phi = OIMap(M,N,{1})
+A = makeOIAlgebra (ZZ/101)
+M = A^{1,1}
+N = A^{1,1}
+phi = OIMap(M,N,{{{1},{2}},{{1},{2}}})
 phi 1
-
+phi 2
+phi 3
