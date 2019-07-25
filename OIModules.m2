@@ -377,7 +377,9 @@ source OIModuleMap := phi -> phi#source
 target OIModuleMap := phi -> phi#target
 
 OIModuleMap ZZ := matrix => (phi, n) -> phi (oiObject n)
-OIModuleMap OIObject := matrix => (phi, n) -> (
+
+OIModuleMap OIObject := matrix => (phi, obj) -> (
+    n := length obj;
     M := source phi;
     N := target phi;
     if (M n) == 0 then return map(N n, M n, 0);
