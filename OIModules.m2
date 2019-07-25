@@ -359,7 +359,6 @@ getOIBasis Module := List => (M) -> (
 
 oiModuleMap = method()
 oiModuleMap (OIModule, OIModule, List) := OIModuleMap => (M,N,l) -> (
-    print "hi!";
     new OIModuleMap from {
 	source => M,
 	target => N,
@@ -371,7 +370,6 @@ idOI = method()
 idOI(OIModule) := OIModuleMap => (M) -> (
     R := ring getOIAlgebra M;
     l := apply(M.widthList, i -> matrix{{1_R}});
-    print l;
     oiModuleMap(M,M,l)
     )
 
@@ -383,13 +381,10 @@ target OIModuleMap := phi -> phi#target
 
 OIModuleMap ZZ := matrix => (phi, n) -> phi (oiObject n)
 OIModuleMap OIObject := matrix => (phi, n) -> (
-    print 1;
     M := source phi;
     N := target phi;
-    print 2;
     if (M n) == 0 then return map(N n, M n, 0);
     if (N n) == 0 then return map(N n, M n, 0);
-    print 3;
     vectors := {};
     widths := getWidthList M;
     imageGens := getImageGensList phi;
@@ -596,7 +591,7 @@ g1 = map(N 2, R^1, transpose matrix {{x,y,z}})
 g2 = map(N 3, R^1, transpose matrix {{x^2,0,y^2,0,z^2,0}})
 
 l = {entries g1,entries g2}
-phi = oiModuleMap(M,N,l,0)
+phi = oiModuleMap(M,N,l)
 
 phi 1
 phi 2
