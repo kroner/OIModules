@@ -22,6 +22,7 @@ newPackage( "OIModules",
     AuxiliaryFiles => false)
 
 export {
+    "OIInitial",
     "OIObject",
     "OIMorphism",
     "OIHom",
@@ -36,8 +37,13 @@ export {
     "OIDivider",
     "makeOIAlgebra",
     "OICleaner",
+    "OIGCD",
+    "OILCM",
     "OIDivisionAlgorithm",
-    "getOIBasis"
+    "getOIBasis",
+    "OISPairs",
+    "OIGroebner",
+    "OIDivideList",
     "getOIAlgebra",
     "getWidthList"
     }
@@ -69,6 +75,14 @@ OICleaner = m ->(
     for i in keys m do(
 	if m#i !=0 then templist = append(templist,{i,m#i}));
     return OIElement(hashTable(templist)))
+
+OIModuleElement == OIModuleElement := (a,b) ->(
+    tempbool:=true;
+    if keys a != keys b then tempbool = false
+    else for i in keys a  when tempbool == true do(
+	if a#i != b#i then tempbool = false);
+    return tempbool) 
+
 
 OIMonomials = method()
 OIMonomials OIModuleElement := List => H -> keys H
@@ -137,6 +151,8 @@ MaxOIMon = L ->(
 OIInitial = m -> MaxOIMon OIMonomials m
 
  
+ 
+ 
 OIDivisionAlgorithm = (m,L) ->(
     tempbool := false;
     init:=0;
@@ -149,30 +165,105 @@ OIDivisionAlgorithm = (m,L) ->(
 	for k in (keys m) when (not tempbool) do(
 	    if OIDivides(i_1,k) then tempbool = true));
     while tempbool == true and #(keys dummy)>0 do(
+	--print("INHERE");
 	templist={};
 	for k in keys dummy do(
 	    for i in initialL do(
 		if OIDivides(i_1,k) then templist=append(templist,k)));
+	--print("NEXT COMMENT");
 	init=MaxOIMon templist;
 	for i in initialL do(
 	    if OIDivides(i_1,init) then(
 		divider = i_0;
 		break));
 --	print("COEFFICIENT",dummy#init/divider#(OIInitial divider));
+--	print(OIInitial(divider),source OIInitial(divider), target OIInitial(divider),init, source init, source init);	
 --	print("DIVIDED",(OIDivider(OIInitial(divider),init))*divider);
 --	print("FIRST",OIDivider(OIInitial(divider),init));
 --	print("OIINITDIVIDER",OIInitial(divider),source OIInitial(divider),target OIInitial(divider) );
 --	print("INIT",init,source init,target init);
 --	print(dummy#init/divider#(OIInitial divider))*(OIDivider(OIInitial divider,init)*divider);
 	dummy = dummy - (dummy#init/divider#(OIInitial divider))*(OIDivider(OIInitial divider,init)*divider);
-        print("DUMMY",dummy);
+--        print("DUMMY",dummy);
 	tempbool = false;
 	for i in initialL when (not tempbool) do(
 	    for k in (keys dummy) when (not tempbool) do(
 	        if OIDivides(i_1,k) then tempbool = true));	
 	);
     return dummy)
+
+
+
+OIDivideList = (a,b) ->(
+    temp:={};
+    for i in OIHom(target a, target b) do(
+	if (i a) ==b then temp = append(temp, i));
+    return temp)
+
+
+OIGCD = (a,b) ->(
+    tempa:={a(1)-1};
+    tempb:={b(1)-1};
+    temp:={};
+    tempreturn:={};
+    for i from 1 to (#(source a)-1) do(
+	tempa = append(tempa,a(i+1)-a(i)-1);
+	tempb = append(tempb,b(i+1)-b(1)-1));
+    tempa = append(tempa,#target(a) - a(#(source a)));
+    tempb = append(tempb,#target(b) - b(#(source b)));
+    for i from 0 to (#tempa-1) do temp = append(temp,min(tempa_i,tempb_i));
+    tempreturn = {temp_0+1};
+    for i from 1 to (#temp-2) do(
+        tempreturn = append(tempreturn,temp_i+tempreturn_(i-1)+1));
+    return OIMorphism(tempreturn,temp_(#temp-1)+tempreturn_(#tempreturn-1)))
     
+OILCM = (a,b) ->(
+    tempa:={a(1)-1};
+    tempb:={b(1)-1};
+    temp:={};
+    tempreturn:={};
+    for i from 1 to (#(source a)-1) do(
+	tempa = append(tempa,a(i+1)-a(i)-1);
+	tempb = append(tempb,b(i+1)-b(1)-1));
+    tempa = append(tempa,#target(a) - a(#(source a)));
+    tempb = append(tempb,#target(b) - b(#(source b)));
+    for i from 0 to (#tempa-1) do temp = append(temp,max(tempa_i,tempb_i));
+    tempreturn = {temp_0+1};
+    for i from 1 to (#temp-2) do(
+        tempreturn = append(tempreturn,temp_i+tempreturn_(i-1)+1));
+    return OIMorphism(tempreturn,temp_(#temp-1)+tempreturn_(#tempreturn-1)))
+
+OISPairs = (a,b)->(
+    temp :={};
+    inita:=OIInitial a;
+    initb:=OIInitial b;
+    tempmon := OILCM(inita,initb);
+    tempa := OIDivideList(inita,tempmon);
+    tempb := OIDivideList(initb,tempmon);
+    --print(tempa,tempb);
+    --print(tempmon);
+    for i in tempa do(
+	for j in tempb do(
+	    temp = append(temp,(b#initb)*(i*a) - (a#inita)*(j*b))));
+    return toList(set(temp))) 
+OIGroebner = L ->(								       
+    Grob:= L;									       
+    tempGrob:={};								       
+    SPolys:= {};								       
+    while Grob != tempGrob do(							       
+	--print(Grob,tempGrob);							       
+	SPolys = {};								       
+	tempGrob = Grob;							       
+	for i in tempGrob do(							       
+	    for j in tempGrob do(						       
+		if i!=j then for k in OISPairs(i,j) do(				       
+		    SPolys = append(SPolys,k))));				       
+	for i in SPolys do(							       
+	    if keys(OIDivisionAlgorithm(i,tempGrob)) !={} then Grob = append(Grob,i)));
+    return(Grob))								       
+
+		     
+        
 
 
 -- constructor for OIElements
@@ -183,7 +274,7 @@ OrderPreservingInjectiveFunction == OrderPreservingInjectiveFunction := (a,b) ->
     else(
 	tempbool := true;
 	for i from 1 to #(source a) do(
-	    if a(i) != b(i) then tempbool false);
+	    if a(i) != b(i) then tempbool = false);
 	return tempbool))    
     
 --OIMonomialtoMonomial = mon->(
