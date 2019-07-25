@@ -516,7 +516,7 @@ installPackage "OIModules"
 
 R = ZZ/101[x,y,z]
 A = makeOIAlgebra (R)
-M = A^{2,3}
+M = oiModule(A,{2,3},null,null)
 N = A^{1,2}
 
 g1 = map(N 2, R^1, transpose matrix {{x,y,z}})
