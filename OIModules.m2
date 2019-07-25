@@ -22,6 +22,7 @@ newPackage( "OIModules",
     AuxiliaryFiles => false)
 
 export {
+    "ConstantOIAlgebra",
     "oiObject",
     "oiMorphism",
     "OIHom",
@@ -48,12 +49,14 @@ protect \ {widthList,OIAlgebra,OIBasis,imageGensList}
 
 OIObject = new Type of VisibleList
 OIMorphism = new Type of HashTable
-ConstantOIAlgebra = new Type of HashTable
 OIModule = new Type of HashTable
 OIModuleElement = new Type of VisibleList
 OIModuleMap = new Type of HashTable  
 
-globalAssignment OIModule
+ConstantOIAlgebra = new Type of MutableHashTable
+ConstantOIAlgebra.synonym = "constant OI-Algebra"
+ConstantOIAlgebra.GlobalAssignHook = globalAssignFunction
+ConstantOIAlgebra.GlobalReleaseHook = globalReleaseFunction
 
 -----------------------
 -- Type constructors --
@@ -255,10 +258,6 @@ makeOIAlgebra Ring := ConstantOIAlgebra => (K) -> (
     )
 
 ring ConstantOIAlgebra := (A) -> A#(symbol ring)
-
-net ConstantOIAlgebra := (A) -> (
-    "The constant OI-algebra determined by "| net ring A
-    )
 
 oiModule = method()
 oiModule(ConstantOIAlgebra,List,OIModuleMap,OIModuleMap) := OIModule => (A,l,gns,rels) -> (
@@ -579,10 +578,10 @@ basisList / (e -> net e)
 
 restart
 installPackage "OIModules"
-viewHelp oiMorphism
 
 R = ZZ/101[x,y,z]
 A = makeOIAlgebra (R)
+
 M = A^{2,3}
 N = A^{1,2}
 N 2
