@@ -813,13 +813,51 @@ doc ///
           A:Automaton
      Description
           Text
-	       Returns an Automaton that accepts only the singlton words for the letters in U.
+	       Returns an Automaton that accepts only the singleton words for the letters in U.
 	  Example
 	       S = {a,b,c}
 	       A = setAutomaton(S,{a,b})
 	       A {a}
 	       A {c}
 ///
+
+
+doc ///
+     Key
+          kleeneSetAutomaton
+	  (kleeneSetAutomaton,List,List)
+     Headline
+          Automaton corresponding to the Kleene star of a set of letter 
+     Usage
+          A = kleeneSetAutomaton(S,U)
+     Inputs
+          S:List
+	       the alphabet
+	  U:List
+	       a subset of the alphabet
+     Outputs
+          A:Automaton
+     Description
+          Text 
+	       This method returns an automaton equivalent to kleeneStar setAutomaton(S,U).
+	       However, it is implemented to give an automaton which is the smallest possible
+	       for this language. This helps to minimize the size of automatons that
+	       are built using these operations, for example, the automaton associated to
+	       a list of OS^op morphisms.  
+	  Example
+	       S = {a,b,c}
+	       A = kleeneStar setAutomaton(S,{a,b})
+	       peek A
+	       B = kleeneSetAutomaton(S,{a,b})
+	       peek B
+	       A = kleeneStar setAutomaton(S,{a,b,c})
+	       peek A
+	       B = kleeneSetAutomaton(S,{a,b,c})
+	       peek B 
+///
+
+
+
 
 doc ///
     Key
@@ -850,8 +888,7 @@ doc ///
     	NFA2DFA
 	(NFA2DFA, Automaton)
     Headline
-    	transforms a Non-Deterministic Finite Automaton (NFA) into a Deterministic Finite
-	Automaton (DFA). 
+    	transforms a NFA into a DFA. 
     Usage
     	B = NFA2DFA(A)
     Inputs
@@ -861,7 +898,8 @@ doc ///
     	B:Automaton
     Description
     	Text
-	    Given an NFA there is a standard algorithm that transforms it into a DFA.
+	    Given an Non-deterministic Finite Automaton (NFA) there is a standard algorithm that transforms it into a
+	    Deterministic Finite Automaton (DFA).
 	    It works by constructing a new automaton from the power set of the states of the NFA.
 	Example
 	    A= kleeneStar(union(wordAutomaton({a,b}, word {a}),wordAutomaton({a,b}, word {b})))
