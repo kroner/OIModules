@@ -30,7 +30,7 @@ export {
     "setAutomaton",
     "surjectionToAutomaton",
     "automatonHS",
-    "NFA2DFA",
+    "NFAtoDFA",
     "cat",
     "kleeneSetAutomaton"
      }
@@ -172,7 +172,7 @@ cat(Automaton,Automaton) := Automaton => (A,B) -> (
 	Acc = Acc|AccA;
 	);
     D := automaton(S,n+m,Mats,Acc);
-    NFA2DFA D
+    NFAtoDFA D
     )
 
 kleeneStar = method()
@@ -180,7 +180,7 @@ kleeneStar(Automaton) := Automaton => A -> (
     S := A.alphabet;
     Mats := for l from 0 to #S-1 list A.transitions#l + ((A.transitions#l)_{0})*(acceptVect A);
     B := automaton(S,A.states,Mats,{A.initial}|(toList A.accepts));
-    NFA2DFA B
+    NFAtoDFA B
     )
 
 transitionMatrix = method()
@@ -219,7 +219,7 @@ automatonHS(Automaton,List) := (A,weights) -> (
 
 automatonHS(Automaton) := A -> (
     n:=#(A.alphabet);
-    T:=frac(QQ[t]);
+    T:=frac(QQ[local t]);
     use T;
     automatonHS(A,apply(n,i->t))
     )
@@ -281,8 +281,8 @@ kleeneSetAutomaton(List,List) := (S,U) -> (
 
 -- Pre:The NFA stores lists of states as targets. If it has a single target a, it stores
 -- the singleton {a}.
-NFA2DFA = method() 
-NFA2DFA(Automaton) := aut -> (
+NFAtoDFA = method() 
+NFAtoDFA(Automaton) := aut -> (
     if isDeterministic aut then return aut;
     ars := new MutableHashTable;
     frontier := { {first aut.states}};
@@ -337,7 +337,7 @@ surjectionToAutomaton List := L -> (
     ans
     )
 
-{*
+-*
 elementToWord = method()
 elementToWord List := e -> (
     n := source e;
@@ -422,7 +422,7 @@ eHilbertSeries = F -> (
     weights := {s}|toList(k:t);
     1 + s*automatonHS(A,weights)
     )
-*}
+*-
 
 beginDocumentation()
 
@@ -916,12 +916,12 @@ Node
 
 Node
     Key
-    	NFA2DFA
-	(NFA2DFA, Automaton)
+    	NFAtoDFA
+	(NFAtoDFA, Automaton)
     Headline
     	transforms a NFA into a DFA. 
     Usage
-    	B = NFA2DFA(A)
+    	B = NFAtoDFA(A)
     Inputs
 	A:Automaton
 	    Automaton
@@ -935,7 +935,7 @@ Node
 	Example
 	    A= kleeneStar(union(wordAutomaton({a,b}, word {a}),wordAutomaton({a,b}, word {b})))
 	    peek A
-	    B = NFA2DFA A
+	    B = NFAtoDFA A
 	    peek B
 ///
     	
@@ -1008,7 +1008,7 @@ A = new Automaton from {
 
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
 A = automaton({0,1},3,tmats,{1,2})
-NFA2DFA A
+NFAtoDFA A
 
 S = {0,1,2}
 A = setAutomaton(S,{1})
