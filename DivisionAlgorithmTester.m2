@@ -24,6 +24,10 @@ Lemon = OIGroebner({S,T})
 for i in Lemon do(
     for j in keys i do(
 	print(j,source j, target j)))
+
+for i in Lemon do(
+    print(i,OIInitial i,target OIInitial i))
+    
 ---------------------------------------------------------
 --DIVISION SEEMS TO WORK EXCEPT FOR WHEN YOU ARE DIVIDING SOMETHING BY ITSELF, CONFUSING
 ---------------------------------------------------------
@@ -38,3 +42,17 @@ T = OIElement(hashTable{{d,1},{e,1}})
 
 OIDivisionAlgorithm(S,{T})
 OIDivisionAlgorithm(S,{S})
+
+
+a = OIMorphism({1,2},3)
+b = OIMorphism{1,3}
+a<b
+
+
+A = OIElement(hashTable{{a,1}})
+B = OIElement(hashTable{{b,1}})
+C = OIElement(hashTable{{c,1}})
+D = OIElement(hashTable{{d,1}})
+E = OIElement(hashTable{{e,1}})
+
+oiMonomialsToHilbert({B,C})
