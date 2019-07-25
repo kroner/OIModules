@@ -53,17 +53,17 @@ A = makeOIAlgebra R
 
 -- the naive example from above (no net yet)
 
-P1 = A^{1}
+P3 = A^{3}
 
 -- OI-Modules are functors:
 
-P1 5
-P1 9
-P1 epsilon
+P3 5
+P3 9
+P3 epsilon
 
 -- And more general free modules are implemented:
 
-F = A^{3,4,5}
+F = A^{2,3,4}
 
 -- ranks grow as binomial coeffs. Can be a bit slow (roughly five seconds here:)
 time apply(20, i -> F i)
