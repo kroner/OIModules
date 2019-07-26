@@ -376,9 +376,8 @@ regexAutomaton(List,List) := (S,R) -> (
 	A := rA(S,take(R,i));
 	C := rA(S,take(R,j-#R+1));
         D := cat'(cat'(A,B),C);
-	return if D =!= null then D else wordAutomaton(S, word {})
-	);
-    wordAutomaton(S, word R)
+	if D =!= null then D else wordAutomaton(S, word {})
+	) else wordAutomaton(S, word R)
     )
 
 
@@ -875,6 +874,35 @@ Node
 
 Node
     Key
+    	regexAutomaton
+	(regexAutomaton,List,List)
+	(regexAutomaton,List,String)
+    Headline
+        Automaton for a regular expression
+    Usage
+    	A = regexAutomaton(S,R)
+	A = regexAutomaton(S,L)
+    Inputs
+	S:List
+	    the alphabet
+	R:String
+	    a regular expression
+	L:List
+	    of characters
+    Outputs
+    	A:Automaton
+    Description
+    	Text
+	    Produces the automaton for the language defined by a regular expression involving
+	    characters from the alphabet, "*", "(", ")", "[", "]".
+	Example
+	    S = {"1","2"}
+	    R = "112*111(22)*"
+	    A = regexAutomaton(S,R)
+	    A "112221112222"
+
+Node
+    Key
     	NFAtoDFA
 	(NFAtoDFA, Automaton)
     Headline
@@ -1043,10 +1071,9 @@ restart
 needsPackage("OIModules")
 loadPackage "RegularLanguages"
 installPackage "RegularLanguages"
-R = "1*"
+R = "112*111(22)*"
 A = regexAutomaton({"1","2"},R)
-A "11211122122"
-B = kleeneSetAutomaton({"1","2"},{"1"})
+A "112221112222"
 
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
 A = automaton({a,b},3,tmats,{2}) -- accepts words with two b's in a row

@@ -409,6 +409,19 @@ coker OIModuleMap := OIModule => (phi) -> (
     oiModule(getOIAlgebra M, getWidthList M, Relations => phi)
     )
 
+--composition of oiModuleMaps
+
+OIModuleMap*OIModuleMap := OIModuleMap => (psi, phi) -> (
+    vectors := getImageGensList phi;
+    M := source phi;
+    widthsSource := getWidthList M;
+    newVectors := {};
+    for i from 0 to ((length vectors)-1) do (
+	newVectors = append(newVectors, (psi widthsSource_i)*vectors_i) 
+	);    
+    oiModuleMap(target psi, M, newVectors)
+    )
+
 beginDocumentation()
 
 -- front page of documentation
