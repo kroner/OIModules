@@ -34,7 +34,9 @@ export {
     "automatonHS",
     "NFAtoDFA",
     "cat",
-    "kleeneSetAutomaton"
+    "kleeneSetAutomaton",
+    "isContained",
+    "sameLanguage"
      }
 
 protect \ {arrows, accepts, states, alphabet, initial, transitions, deterministic}
@@ -379,6 +381,16 @@ regexAutomaton(List,List) := (S,R) -> (
 	if D =!= null then D else wordAutomaton(S, word {})
 	) else wordAutomaton(S, word R)
     )
+
+isContained = method()
+isContained(Automaton,Automaton) := (A,B) -> (
+    if A.alphabet != B.alphabet then return false;
+    C := trim intersection(A, complement B);
+    #C.accepts == 0
+    )
+
+sameLanguage = method()
+sameLanguage(Automaton,Automaton) := (A,B) -> isContained(A,B) and isContained(B,A)
 
 
 
@@ -1074,6 +1086,15 @@ installPackage "RegularLanguages"
 R = "112*111(22)*"
 A = regexAutomaton({"1","2"},R)
 A "112221112222"
+
+S = {"a","b"}
+M = matrix{{0,0,0},{1,0,0},{0,1,1}}
+B = automaton(S,3,{M,M},{1,2})
+A = complement wordAutomaton(S,word "")
+sameLanguage(A,B)
+C = kleeneSetAutomaton(S,S)
+isContained(A,C)
+sameLanguage(A,C)
 
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
 A = automaton({a,b},3,tmats,{2}) -- accepts words with two b's in a row
