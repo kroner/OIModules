@@ -333,7 +333,8 @@ oiMonomialsToHilbert = L ->(
 	temp = append(temp,tempmonomial);
 	);
     I := ideal(temp);
-    return hilbertSeries I)
+    T := S^{-n};
+    return hilbertSeries I*T)
 
 -*OrderPreservingInjectiveFunction == OrderPreservingInjectiveFunction := (a,b) ->(
     if #(source a) != #(source b) then return false
