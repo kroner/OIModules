@@ -1,3 +1,4 @@
+
 newPackage(
      "RegularLanguages",
      Version =>"0.0",
@@ -6,7 +7,10 @@ newPackage(
      HomePage => "",
      Authors => {
 	  },
-     PackageImports => {"EquivariantGB"},
+     PackageImports => {
+	 "EquivariantGB",
+	 "OIModules"
+	 },
      DebuggingMode => true, --should be true while developing a package, 
      --   but false after it is done
      AuxiliaryFiles => false
@@ -16,36 +20,38 @@ export {
     "Automaton",
     "Word",
     "word",
-    "RegularLanguage",
     "automaton",
+    "isDeterministic",
     "transitionMatrix",
+    "renameStates",
+    "union",
+    "intersection",
     "kleeneStar",
     "wordAutomaton",
-    "monomialAutomaton",
-    "monomialToWord",
-    "commAutomaton",
-    "idealAutomaton",
+    "setAutomaton",
+    "surjectionToAutomaton",
     "automatonHS",
-    "NFA2DFA",
-    "cat"
+    "NFAtoDFA",
+    "cat",
+    "kleeneSetAutomaton"
      }
 
-protect \ {arrows, accepts, states, alphabet, initial, transitions}
+protect \ {arrows, accepts, states, alphabet, initial, transitions, deterministic}
 --Types
 Automaton = new Type of HashTable
 Word = new Type of List
-RegularLanguage = new Type of HashTable
 
 --Methods
 
 word = method()
 word(List) := L -> new Word from L
+word(String) := s -> word characters s
 
 -- New automaton with states indexed by snames, alphabet S, i the intial state and A the set of accept states.
 -- The arrows are not yet defined.
 automaton = method()
-automaton(List,List,HashTable,Set) := (S,sts,ars,Acc) -> automaton(S,sts,ars,toList Acc)
-automaton(List,List,HashTable,List) := (S,sts,ars,Acc) -> (
+automaton(List,List,HashTable,Set) := Automaton => (S,sts,ars,Acc) -> automaton(S,sts,ars,toList Acc)
+automaton(List,List,HashTable,List) := Automaton => (S,sts,ars,Acc) -> (
     L := for state in sts list (
 	starrows := if ars#?state then new MutableHashTable from ars#state else new MutableHashTable;
 	for l in S do if not starrows#?l then starrows#l = {last sts};
@@ -53,34 +59,38 @@ automaton(List,List,HashTable,List) := (S,sts,ars,Acc) -> (
 	);
     ars = hashTable L;
     Mats := arrowsToMatrices(S,sts,ars);
-    Acc = toList((set sts)*(set Acc)); 
+    Acc = toList((set sts)*(set Acc));
+    d := not any(sts, state -> any(S, l -> #ars#state#l > 1));
     new Automaton from {
 	alphabet => S, 
 	states => sts,
 	arrows => ars,
 	transitions => Mats,
 	initial => first sts, 
-	accepts => set Acc
+	accepts => set Acc,
+	deterministic => d
 	}
     )
-automaton(List,List,List,Set) := (S,sts,Mats,Acc) -> automaton(S,sts,Mats,toList Acc)
-automaton(List,List,List,List) := (S,sts,Mats,Acc) -> (
+automaton(List,List,List,Set) := Automaton => (S,sts,Mats,Acc) -> automaton(S,sts,Mats,toList Acc)
+automaton(List,List,List,List) := Automaton => (S,sts,Mats,Acc) -> (
     ars := matricesToArrows(S,sts,Mats);
-    Acc = toList((set sts)*(set Acc)); 
+    Acc = toList((set sts)*(set Acc));
+    d := not any(sts, state -> any(S, l -> #ars#state#l > 1));
     new Automaton from {
 	alphabet => S, 
 	states => sts,
 	arrows => ars,
 	transitions => Mats,
 	initial => first sts, 
-	accepts => set Acc
+	accepts => set Acc,
+	deterministic => d
 	}
     )
-automaton(List,ZZ,List,Set) := (S,n,Mats,Acc) -> automaton(S,n,Mats,toList Acc)
-automaton(List,ZZ,List,List) := (S,n,Mats,Acc) -> automaton(S,toList(0..n-1),Mats,Acc)
+automaton(List,ZZ,List,Set) := Automaton => (S,n,Mats,Acc) -> automaton(S,n,Mats,toList Acc)
+automaton(List,ZZ,List,List) := Automaton => (S,n,Mats,Acc) -> automaton(S,toList(0..n-1),Mats,Acc)
 
 
--- transition matrix of automaton A for letter l
+-- converts HashTables of arrows to a list of transition matrices
 arrowsToMatrices = method()
 arrowsToMatrices(List,List,HashTable) := (S,states,H) -> (
     n := #states;
@@ -93,6 +103,7 @@ arrowsToMatrices(List,List,HashTable) := (S,states,H) -> (
 	)
     )
 
+-- converts a list of transition matrices to HashTables of arrows
 matricesToArrows = method()
 matricesToArrows(List,List,List) := (S,states,Mats) -> (
     HashList := apply(states, state->new MutableHashTable);
@@ -101,6 +112,7 @@ matricesToArrows(List,List,List) := (S,states,Mats) -> (
 	M := Mats#l;
 	for j from 0 to n-1 do (
 	    is := select(n, i-> M_(i,j) != 0);
+	    is = apply(is, i -> states#i);
 	    (HashList#j)#(S#l) = is;
 	    );
 	);
@@ -114,32 +126,40 @@ Automaton Word := (A,w) -> (
     (acceptVect(A)*v)_(0,0) != 0
     )
 Automaton List := (A,L) -> A (word L)
+Automaton String := (A,s) -> A (word s)
 
+net Automaton := A -> (
+    "Automaton on states "|net(A.states)
+    )
 
-complement(Automaton) := A -> (
+complement(Automaton) := Automaton => A -> (
     H := new MutableHashTable from A;
-    H.accepts = set(keys A.states) - A.accepts;
+    H.accepts = set(A.states) - A.accepts;
     new Automaton from H
     )
 
-intersect(Automaton,Automaton) := (A,B) -> (
+productList = (L,M) -> flatten for a in L list for b in M list (a,b)
+
+intersection = method()
+intersection(Automaton,Automaton) := Automaton => (A,B) -> (
     S := A.alphabet;
-    sts := flatten for a in A.states list for b in B.states list (a,b);
-    Acc := flatten for a in toList A.accepts list for b in toList B.accepts list (a,b);
-    C := automaton(S,sts,(A.initial,B.initial),Acc);
-    for state in sts do for l in S do (
-	C.arrows#state#l = (A.arrows#(state#0)#l, B.arrows#(state#1)#l);
+    sts := productList(A.states, B.states);
+    Acc := productList(toList A.accepts, toList B.accepts);
+    ars := hashTable for state in sts list (
+	state => hashTable for l in S list (
+	    l => productList(A.arrows#(state#0)#l, B.arrows#(state#1)#l)
+	    )
 	);
-    C
-    )
+    automaton(S,sts,ars,Acc)
+    )	 
 
 union = method()
-union(Automaton,Automaton) := (A,B) -> (
-    complement ((complement A) * (complement B))
+union(Automaton,Automaton) := Automaton => (A,B) -> (
+    complement intersection(complement A, complement B)
     )
 
 cat = method()
-cat(Automaton,Automaton) := (A,B) -> (
+cat(Automaton,Automaton) := Automaton => (A,B) -> (
     S := A.alphabet;
     n := #A.states;
     m := #B.states;
@@ -148,37 +168,61 @@ cat(Automaton,Automaton) := (A,B) -> (
 	matrix{{A.transitions#l, map(ZZ^n,ZZ^m,0)},{C, B.transitions#l}}
 	);
     Acc := apply(toList B.accepts, state->n+position(B.states,st->st===state));
-    automaton(S,n+m,Mats,Acc)
+    if member(B.initial, B.accepts) then (
+	AccA := apply(toList A.accepts, state->position(A.states,st->st===state));
+	Acc = Acc|AccA;
+	);
+    D := automaton(S,n+m,Mats,Acc);
+    NFAtoDFA D
     )
 
 kleeneStar = method()
-kleeneStar(Automaton) := A -> (
+kleeneStar(Automaton) := Automaton => A -> (
     S := A.alphabet;
     Mats := for l from 0 to #S-1 list A.transitions#l + ((A.transitions#l)_{0})*(acceptVect A);
-    automaton(S,A.states,Mats,A.accepts)
+    B := automaton(S,A.states,Mats,{A.initial}|(toList A.accepts));
+    NFAtoDFA B
     )
 
 transitionMatrix = method()
 transitionMatrix(Automaton,Thing) := (A,l) -> (
-    k := position(A.alphabet, m -> m===l);
+    k := position(A.alphabet, m -> (m===l or toString m == toString l));
     A.transitions#k
-    ) 
+    )
+
+renameStates = method()
+renameStates(Automaton) := A -> renameStates(A,toList(0..#A.states-1))
+renameStates(Automaton,List) := (A,L) -> (
+    assert(#L == #A.states);
+    Acc := select(#L, i->member(A.states#i, A.accepts));
+    Acc = apply(Acc, i->L#i);
+    automaton(A.alphabet,L,A.transitions,Acc)
+    )
 
 -- characteristic column vector of the initial state.
 initVect = A -> transpose matrix {toList apply(A.states, s->if s===A.initial then 1 else 0)}
 -- characteristic row vector of the accept states.
 acceptVect = A -> matrix {toList apply(A.states, s->if member(s,A.accepts) then 1 else 0)}
 
+isDeterministic = method()
+isDeterministic(Automaton) := A -> A.deterministic
 
 automatonHS = method()
 automatonHS(Automaton,List) := (A,weights) -> (
     k := #A.states;
     T := ring first weights;
-    M := apply(#A.alphabet, l->sub(transitionMatrix(A,l),T));
+    M := apply(A.alphabet, l->sub(transitionMatrix(A,l),T));
     v := sub(initVect A,T);
     u := sub(acceptVect A,T);
     N := id_(T^k) - sum apply(#A.alphabet, i->(M#i)*(weights#i));
     first flatten entries (u*(inverse N)*v)
+    )
+
+automatonHS(Automaton) := A -> (
+    n:=#(A.alphabet);
+    T:=frac(QQ[local t]);
+    use T;
+    automatonHS(A,apply(n,i->t))
     )
 
 -- remove unreachable states from an automaton
@@ -188,13 +232,10 @@ trim Automaton := o -> A -> (
     seen := new MutableHashTable from stateHash;
     while #keys(stateHash) > 0 do (
 	state := first keys stateHash;
-	for l in S do (
-	    newStates := A.arrows#state#l;
-	    for newState in newStates do (
-	    	if seen#?newState then continue;
-	    	stateHash#newState = 0;
-	    	seen#newState = 0;
-		);
+	for l in S do for newState in A.arrows#state#l do (
+	    if seen#?newState then continue;
+	    stateHash#newState = 0;
+	    seen#newState = 0;
 	    );
 	remove(stateHash,state);
 	);
@@ -213,6 +254,112 @@ wordAutomaton(List,Word) := (S,w) -> (
     )
 
 
+-- automaton that accepts any letter of the input set
+-- it is equivalent to the regular expression {a,b,...,n}
+-- Input: A language S and a subset of letter U
+setAutomaton = method()
+setAutomaton(List,List) :=(S,U) -> (
+    junk:=hashTable apply(S,i->(i=>{2}));
+    hash0 := hashTable apply(S, i-> if member(i,U) then (i=>{1}) else (i=>{2}));
+    ars:= hashTable {0 => hash0, 1=>junk, 2=>junk};
+    automaton(S,{0,1,2},ars,{1})
+    )
+
+
+-- an optimized version of the composition between the setAutomaton an the kleene
+-- automaton. It is equivalent to the regular expression {1,2,..,n}}*
+kleeneSetAutomaton = method()
+kleeneSetAutomaton(List,List) := (S,U) -> (
+    junk:=hashTable apply(S,i->(i=>{1}));
+    hash0 := hashTable apply(S, i-> if member(i,U) then (i=>{0}) else (i=>{1}));
+    ars:= hashTable {0 => hash0, 1=>junk, 2=>junk};
+    trim automaton(S,{0,1},ars,{0})    
+    )
+
+-- Given a Non-Deterministic Finite Automaton (NFA) it implements the classical algorithm
+-- to convert it into a Deterministic Finite Automaton (DFA)
+-- The states of the DFA are indexed by sets of states of the original automaton
+
+-- Pre:The NFA stores lists of states as targets. If it has a single target a, it stores
+-- the singleton {a}.
+NFAtoDFA = method() 
+NFAtoDFA(Automaton) := aut -> (
+    if isDeterministic aut then return aut;
+    ars := new MutableHashTable;
+    frontier := { {first aut.states}};
+    while #frontier > 0  do (
+	  currentState := frontier#0;
+	  frontier = drop (frontier,1);
+	   
+	  starrows:= new MutableHashTable from aut.arrows#(aut.initial);
+	  for letter in keys(starrows) do (
+	     starrows#letter = {unique flatten apply(currentState,st -> aut.arrows#st#letter)};
+	     
+	     
+	     -- Check last is rejected state
+	     -- Make the list of accepted states
+	     if ( not ars#?(starrows#letter#0) ) then (
+		 
+		 frontier = append(frontier,starrows#letter#0);
+		 );	    
+	     );
+	 ars#currentState = starrows;
+      	 );
+      
+      acc:= select(keys(ars), l->any(l, i-> member(i,aut.accepts)));
+      trim automaton(aut.alphabet,sort keys(ars),ars,acc)
+      )
+
+--Input: ordered surjection f:[m]->[n] encoded as (f(1),...,f(m)).
+--Output: Regular language for ideal generated by this in OS^op-module P_n
+surjToAutomaton = method()
+surjToAutomaton List := f -> (
+    m:=length f;
+    if m==0 or f_0!=1 then error "expected an ordered surjection.";
+    val:=sort unique f;
+    seen:=1;
+    ans:=cat(wordAutomaton(val, word{f_0}), kleeneSetAutomaton(val,{1}));
+    for i from 1 to m-1 do (
+	ans = cat(ans, wordAutomaton(val, word{f_i}));
+	if f_i > seen then 
+	if f_i > seen+1 then error "expected an ordered surjection."
+	else seen=seen+1;
+    	ans = cat(ans, kleeneSetAutomaton(val,toList(1..seen)));
+	);
+    ans
+    )
+
+--Input: a list of ordered surjections
+--Output: Regular language for ideal generated by the ordered surjections
+surjectionToAutomaton = method()
+surjectionToAutomaton List := L -> (
+    ans:=surjToAutomaton(L_0);
+    for i from 1 to #L-1 do ans=union(ans,surjToAutomaton(L_i));
+    ans
+    )
+
+-*
+elementToWord = method()
+elementToWord List := e -> (
+    n := source e;
+    m := target e;
+    k := 1;
+    L := for i from 1 to n list (
+	space := (e i) - k;
+	k = e i;
+	(toList (space:0))|{1}
+	);
+    (join L)|(toList (m-k):0)
+    )
+
+elementAutomaton = method()
+elementAutomaton List := e -> (
+    w := elementToWord e;
+    hashs := for i from 0 to #w-1 list (
+	if w#i == 0 then hashTable{0 => {i+1}} else hashTable{0 => {i}, 1 => {i+1}}
+	);
+    automaton({0,1},toList(0..#w+1),hashTable hashs,{#w})
+    )
 
 ----------------------------------------------------------------------------------------------
 -- OI-algebra Hilbert series methods
@@ -234,9 +381,9 @@ monomialAutomaton = (m,S) -> (
     A := automaton(S,#w+1,toList(0..#w-1));
     lastrho := 0;
     for i from 0 to #w-1 do (
-	A.arrows#i#(w#i) = i+1;
+	A.arrows#i#(w#i) = {i+1};
 	if w#i == 0 then lastrho = i+1
-	else A.arrows#i#0 = lastrho;
+	else A.arrows#i#0 = {lastrho};
 	);
     A
     )
@@ -247,9 +394,9 @@ monomialAutomaton = (m,S) -> (
 commAutomaton = S -> (
     A := automaton(S,#S,toList(0..#S-2));
     for i from 0 to #S-2 do (
-	A.arrows#i#0 = 0;
+	A.arrows#i#0 = {0};
 	for l from 0 to #S-2 do
-	    A.arrows#i#(l+1) = if l < i then #S-1 else l;
+	    A.arrows#i#(l+1) = if l < i then {#S-1} else {l};
 	);
     A
     )
@@ -276,69 +423,49 @@ eHilbertSeries = F -> (
     weights := {s}|toList(k:t);
     1 + s*automatonHS(A,weights)
     )
-    
-
-
--- Given a Non-Deterministic Finite Automaton (NFA) it implements the classical algorithm
--- to convert it into a Deterministic Finite Automaton (DFA)
--- The states of the DFA are indexed by sets of states of the original automaton
-
--- Pre:The NFA stores lists of states as targets. If it has a single target a, it stores
--- the singleton {a}.
-NFA2DFA = method() 
-NFA2DFA(Automaton) := aut -> (
-    
-    print(aut.arrows);
-    print aut.states;
-    ars := new MutableHashTable;
-    print keys aut;
-    frontier := { {first aut.states}};
-    while #frontier > 0  do (
-	  currentState := frontier#0;
-	  drop (frontier,1);
-	   
-	  starrows:= new MutableHashTable from aut.arrows#(frontier#0);
-	  
-	  for i to #keys(starrows) do (
-	     letter:= keys(starrows)#i;  
-	     starrows#letter = unique flatten apply(currentState,st -> aut.arrows#letter);
-	     
-	     
-	     -- Check last is rejected state
-	     -- Make the list of accepted states
-	     if ( not ars#?(starrows#letter) ) then (
-		 
-		 frontier = append(frontier,starrows#letter);
-		 );	    
-	     );
-	 ars#currentState = starrows;
-      	 );
-      acc:= select(keys(ars), l->l#?(last aut.states));
-      automaton(aut.alphabet,sort keys(ars),ars,acc)
-      
-    )
-
-
-
+*-
 
 beginDocumentation()
 
-doc ///
+multidoc ///
+Node
      Key
           RegularLanguages
      Headline
-          A package for regular languages and their Hilbert series
+          A package for regular languages and their generating functions
      Description
           Text
-	       Do regular language stuff.
+	       This package implements all of the basic operations of regular languages which are represented by finite state automata. 
+	       It also computes the generating function of a regular language, where each letter can be given a weight.
           
-///
+Node 
+     Key
+          Automaton
+	  (symbol SPACE,Automaton,List)
+	  (symbol SPACE,Automaton,String)
+	  (symbol SPACE,Automaton,Word)
+	  (net,Automaton)
+     Headline
+          the class of finite state automata
+     Description
+          Text
+	       Can represent a deterministic or nondeterministic automaton.
+	       
+	       The following example makes an automaton that only accepts the word aab.
+	  Example
+	       S = {"a","b"}
+	       B = wordAutomaton(S, word "aab")
+	       B "aab"
+	       B "aabb"
 
-doc ///
+Node
      Key
           automaton
+	  (automaton,List,List,HashTable,Set)
 	  (automaton,List,List,HashTable,List)
+	  (automaton,List,List,List,Set)
 	  (automaton,List,List,List,List)
+	  (automaton,List,ZZ,List,Set)
 	  (automaton,List,ZZ,List,List)
      Headline
           constructor for Automaton
@@ -370,7 +497,8 @@ doc ///
 	       The first way is as a HashTable of HashTables.  The keys
 	       of the HashTable are the states, and the values are HashTables that assign a
 	       list of states to each element of the alphabet.  Any missing arrows default to 
-	       point to the last state.
+	       point to the last state.  The alphabet elements can either be symbols or strings
+	       with length 1.
 	       
 	       This example accepts words in the alphabet \{a,b\} that contain at least one b
 	  Example
@@ -387,34 +515,590 @@ doc ///
 	       This example accepts words in the alphabet \{a,b\} that contain two b's in a row.
           Example
                tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
-	       A = automaton({a,b},3,tmats,{2})
-	       A {a,b,a,a,b,a,b,a}
-	       A {b,b}
+	       A = automaton({"a","b"},3,tmats,{2})
+	       A "abaababa"
+	       A "bb"
+
+Node
+     Key
+          Word
+     Headline
+          the class of words in a finite alphabet
+     Description
+          Text
+	       Should this class even exist?
+	  Example
+	       S = {a,b}
+	       w = word {a,a,a}
+	       A = wordAutomaton(S, w)
+	       A w
+
+
+Node
+     Key
+          word
+	  (word,String)
+	  (word,List)
+     Headline
+          constructor for Word class
+     Usage
+          w = word L
+	  w = word S
+     Inputs
+          L:List
+	  S:String
+     Outputs
+          w:Word
+     Description
+          Text
+	       Converts a list of characters or symbols, or a string into a Word, which can
+	       be input into an Automaton.
+	  Example
+	       w = word "aabbcc"
+	       A = wordAutomaton({"a","b","c"}, w)
+	       u = word {a,a,a}
+	       A u
+
+Node
+     Key
+	  (trim,Automaton)
+     Headline
+          removes extraneous states from an Automaton
+     Usage
+          B = trim A
+     Inputs
+          A:Automaton
+     Outputs
+          B:Automaton
+     Description
+          Text
+	       Removes any unreachable states from an Automaton
+	  Example
+	       tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
+	       A = automaton({0,1},3,tmats,{1,2})
+	       B = trim A
+
+Node
+     Key
+          renameStates
+	  (renameStates,Automaton)
+	  (renameStates,Automaton,List)
+     Headline
+          rename the states of an Automaton
+     Usage
+          B = renameStates(A)
+	  B = renameStates(A,L)
+     Inputs
+          A:Automaton
+	  L:List
+     Outputs
+          B:Automaton
+     Description
+          Text
+	       Renames the states of an automaton by the elements of the list L.  If no list is
+	       provided, then the nonnegative integers 0..n-1 are used, where n is the number
+	       of states.
+	  Example
+	       C = wordAutomaton({a,b,c}, word {c})
+	       A = cat(C,C)
+	       B = renameStates A
+
+Node
+     Key
+          transitionMatrix
+	  (transitionMatrix,Automaton,Thing)
+     Headline
+          transition matrix of an Automaton
+     Usage
+          M = renameStates(A,l)
+     Inputs
+          A:Automaton
+	  l:Thing
+	       element of the alphabet
+     Outputs
+          M:Matrix
+     Description
+          Text
+	       A finite state automaton can be represented by its transition matrices,
+	       one for each element of the alphabet.  The transition matrix for element l
+	       is the adjacency matrix of the directed graph with edges labeled by l.
+	       Equivalently, it is the stochastic matrix that represents the state change
+	       when the letter l is encountered in a word.
+	  Example
+	       A = wordAutomaton({"a","b"}, word "aba")
+	       transitionMatrix(A,"a")
+	       transitionMatrix(A,"b")
+
+Node
+     Key
+	 (complement,Automaton)
+     Headline
+          Automaton for the complement language
+     Usage
+          B = complement A
+     Inputs
+          A:Automaton
+     Outputs
+          B:Automaton
+     Description
+          Text
+	       Produces the automaton that accepts on the language that is complement to that
+	       of the input.  These two automata differ only in which states are accepting.
+	  Example
+	       S = {a,b}
+	       A = wordAutomaton(S, word {a,a})
+	       B = complement A
+	       B {a,a}
+     Caveat
+          Applying this function to nondeterministic automata may give incorrect results.
+
+Node
+     Key
+          union
+	  (union,Automaton,Automaton)
+     Headline
+          Automaton for the union of languages
+     Usage
+          C = union(A,B)
+     Inputs
+          A:Automaton
+	  B:Automaton
+     Outputs
+          C:Automaton
+     Description
+          Text
+	       Produces the automaton that accepts on the language that is the union of
+	       those accepted by the two input automata
+	  Example
+	       S = {a,b}
+	       A = wordAutomaton(S, word {a,a})
+	       B = wordAutomaton(S, word {b,b})
+	       C = union(A,B)
+	       C {a,a}
+
+Node
+     Key
+     	  intersection
+	  (intersection,Automaton,Automaton)
+     Headline
+          Automaton for the intersection of languages
+     Usage
+          C = intersection(A,B)
+     Inputs
+          A:Automaton
+	  B:Automaton
+     Outputs
+          C:Automaton
+     Description
+          Text
+	       Produces the automaton that accepts on the language that is the intersection of
+	       those accepted by the two input automata
+	  Example
+	       S = {a,b}
+	       A = kleeneStar(wordAutomaton(S, word {a,a}))
+	       B = kleeneStar(wordAutomaton(S, word {b,b}))
+	       C = intersection(A,B)
+	       C ""
+
+Node
+     Key
+          cat
+	  (cat,Automaton,Automaton)
+     Headline
+          Automaton for the concatenation of languages
+     Usage
+          C = cat(A,B)
+     Inputs
+          A:Automaton
+	  B:Automaton
+     Outputs
+          C:Automaton
+     Description
+          Text
+	       Produces the automaton that accepts on the language that is the concatenation of
+	       those accepted by the two input automata
+	  Example
+	       S = {a,b}
+	       A = wordAutomaton(S, word {a,a})
+	       B = wordAutomaton(S, word {b,b})
+	       C = cat(A,B)
+	       C {a,a,b,b}
+
+Node
+     Key
+          kleeneStar
+	  (kleeneStar,Automaton)
+     Headline
+          Automaton for the Kleene star of a language
+     Usage
+          B = kleeneStar(A)
+     Inputs
+          A:Automaton
+     Outputs
+          B:Automaton
+     Description
+          Text
+	       Produces the automaton that accepts on the language that is the Kleene star of
+	       the one accepted by the input automaton.
+	  Example
+	       S = {a,b}
+	       A = wordAutomaton(S, word {a})
+	       B = kleeneStar A
+	       B {a,a,a,a}
+	       B {}
+
+Node
+     Key
+          automatonHS
+	  (automatonHS,Automaton)
+	  (automatonHS,Automaton,List)
+     Headline
+          generating function of an automaton
+     Usage
+          f = automatonHS(A)
+	  f = automatonHS(A,W)
+     Inputs
+          A:Automaton
+	  W:List
+	       weights
+     Outputs
+          f:RingElement
+     Description
+          Text
+	       Produces the generating function of the language accepted by the automaton
+	       with weights W.  W should have a weight for each element of the alphabet,
+	       and the weights should be elements of a fraction field.
+	       
+	       If W is not specified, then the default behavior is to use the variable t in frac(QQ[t])
+	  Example
+	       S = {a,b}
+	       Mats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
+	       A = automaton({a,b},3,Mats,{2})
+	       f = automatonHS(A)
+	       factor(f)
+	       T = frac(QQ[x,y])
+	       g = automatonHS(A,{x,y})
+	       factor(g)
+     Caveat
+          Applying this function to nondeterministic automata may give incorrect results.
+
+Node
+     Key
+          isDeterministic
+	  (isDeterministic,Automaton)
+     Headline
+     	 Tests if an automaton is deterministic
+     Usage
+          b = isDeterministic(A)
+     Inputs
+          A:Automaton
+     Outputs
+          b:Boolean
+     Description
+          Text
+	       Returns whether the automaton is deterministic (one arrow per letter from each
+	       state) or nondeterministic (possibly more arrows per letter).
+	  Example
+	       Mats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
+	       isDeterministic(automaton({a,b},3,Mats,{2}))
+	       Mats2 = {matrix{{1,1,0},{1,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
+	       isDeterministic(automaton({a,b},3,Mats2,{2}))
+
+Node
+     Key
+          wordAutomaton
+	  (wordAutomaton,List,Word)
+     Headline
+          Automaton of a singleton language 
+     Usage
+          A = wordAutomaton(S,w)
+     Inputs
+          S:List
+	       the alphabet
+          w:Word
+     Outputs
+          A:Automaton
+     Description
+          Text
+	       Returns an Automaton that accepts the singleton language consisting only of the
+	       word w.
+	  Example
+	       S = {a,b}
+	       w = word {a,a,b}
+	       A = wordAutomaton(S,w)
+	       A w
+	       A {a,a,b,b}
+
+Node
+     Key
+          setAutomaton
+	  (setAutomaton,List,List)
+     Headline
+          Automaton of a set of letters 
+     Usage
+          A = setAutomaton(S,U)
+     Inputs
+          S:List
+	       the alphabet
+	  U:List
+	       a subset of the alphabet
+     Outputs
+          A:Automaton
+     Description
+          Text
+	       Returns an Automaton that accepts only the singleton words for the letters in U.
+	  Example
+	       S = {a,b,c}
+	       A = setAutomaton(S,{a,b})
+	       A {a}
+	       A {c}
+
+Node
+     Key
+          kleeneSetAutomaton
+	  (kleeneSetAutomaton,List,List)
+     Headline
+          Automaton corresponding to the Kleene star of a set of letter 
+     Usage
+          A = kleeneSetAutomaton(S,U)
+     Inputs
+          S:List
+	       the alphabet
+	  U:List
+	       a subset of the alphabet
+     Outputs
+          A:Automaton
+     Description
+          Text 
+	       This method returns an automaton equivalent to kleeneStar setAutomaton(S,U).
+	       However, it is implemented to give an automaton which is the smallest possible
+	       for this language. This helps to minimize the size of automatons that
+	       are built using these operations, for example, the automaton associated to
+	       a list of OS^op morphisms.  
+	  Example
+	       S = {a,b,c}
+	       A = kleeneStar setAutomaton(S,{a,b})
+	       peek A
+	       B = kleeneSetAutomaton(S,{a,b})
+	       peek B
+	       A = kleeneStar setAutomaton(S,{a,b,c})
+	       peek A
+	       B = kleeneSetAutomaton(S,{a,b,c})
+	       peek B 
+
+Node
+    Key
+    	surjectionToAutomaton
+	(surjectionToAutomaton, List)
+    Headline
+    	converts a list of OS^op-morphisms into a regular language
+    Usage
+    	A = surjectionToAutomaton(L)
+    Inputs
+	L:List
+	    List
+    Outputs
+    	A:Automaton
+    Description
+    	Text
+	    The monomials in a monomial submodule of a principal projective OS^{op}-module P_n 
+	    can be encoded by a regular sequence in the alphabet {1..n}. This method constructs
+	    the corresponding DFA.
+	    
+	    A list represents an ordered surjection if for each i<j, the first instance of i 
+	    appears before the first instance of j. The monomials generated by a particular list
+	    \{a_1,...,a_n\} is the language a_1 S_1^* .. a_n S_n^* where S_i = \{a_1,...,a_i\}.
+	    
+	    This will return an error if any of the inputs is not an ordered surjection.
+	Example
+	    A=surjectionToAutomaton({{1}})
+	    use frac(QQ[t])
+	    automatonHS(A,{t})
+
+Node
+    Key
+    	NFAtoDFA
+	(NFAtoDFA, Automaton)
+    Headline
+    	transforms a NFA into a DFA. 
+    Usage
+    	B = NFAtoDFA(A)
+    Inputs
+	A:Automaton
+	    Automaton
+    Outputs
+    	B:Automaton
+    Description
+    	Text
+	    Given an Non-deterministic Finite Automaton (NFA) there is a standard algorithm that transforms it into a
+	    Deterministic Finite Automaton (DFA).
+	    It works by constructing a new automaton from the power set of the states of the NFA.
+	Example
+	    A= kleeneStar(union(wordAutomaton({a,b}, word {a}),wordAutomaton({a,b}, word {b})))
+	    peek A
+	    B = NFAtoDFA A
+	    peek B
 ///
+    	
+
+TEST ///
+
+A = wordAutomaton({a,b,c},word{a,b});
+assert A {a,b};
+assert not A {};
+assert not A {a,b,c};
+assert A "ab";
+///
+
+
+TEST ///
+
+A = setAutomaton({a,b,c},{a,b});
+assert A {a};
+assert  A "b";
+assert not A {"c"};
+assert not A "";
+assert not A "aa";
+///
+
+TEST ///
+
+A = setAutomaton({a,b,c},{a,b});
+assert A {a};
+assert  A "b";
+assert not A {"c"};
+assert not A "";
+assert not A "aa";
+///
+
+
+TEST ///
+
+A = kleeneStar wordAutomaton({a,b,c},word{a});
+N = 100;
+w = "";
+scan(N,i-> (assert A w; w = concatenate(w,"a")))
+assert not A concatenate(w,"b")
+///
+
+
+TEST ///
+R = frac(QQ[t]);
+n = 100;
+A = kleeneStar setAutomaton (toList (1..n),toList (1..n));
+B = kleeneSetAutomaton (toList (1..n),toList (1..n));
+weights = toList (n:t);
+assert (automatonHS (A,weights) == automatonHS(B,weights))
+automatonHS (A,weights)
+///
+
+
+TEST ///
+-- Empty automaton
+R = frac(QQ[t]);
+S = {1,2,3};
+A = complement kleeneSetAutomaton(S,S);
+weights = toList (#S:t);
+assert (automatonHS(A,weights)==0_R)
+ 
+///
+
+
+TEST ///
+
+-- Assert functionality of surjectionToAutomaton method
+
+R = frac(QQ[t]);
+S = {1,2,3};
+A = setAutomaton (S,{1});
+A = cat(A, kleeneSetAutomaton(S,{1}));
+A = cat(A, setAutomaton(S,{2}));
+A = cat(A, kleeneSetAutomaton(S,{1,2}));
+A = cat(A, setAutomaton(S,{1}));
+A = cat(A, kleeneSetAutomaton(S,{1,2}));
+A = cat(A, setAutomaton(S,{2}));
+A = cat(A, kleeneSetAutomaton(S,{1,2}));
+A = cat(A, setAutomaton(S,{3}));
+A = cat(A, kleeneSetAutomaton(S,{1,2,3}));
+
+assert A "12123"
+assert A "112123"
+assert A "121123"
+assert A "121213"
+assert A "121223"
+assert A "121231"
+assert A "121232"
+assert A "121233"
+assert A "122123"
+automatonHS A;
+
+B = surjectionToAutomaton({{1,2,1,2,3}});
+
+
+assert B "12123"
+assert B "112123"
+assert B "121123"
+assert B "121213"
+assert B "121223"
+assert B "121231"
+assert B "121232"
+assert B "121233"
+assert B "122123"
+automatonHS B
+weights = toList (3:t);
+assert (automatonHS (A,weights) == automatonHS(B,weights))
+automatonHS (A,weights)
+
+
+ 
+///
+
+
+TEST ///
+
+-- surjectionToAutomatonBug
+
+l = {{0}};
+try A = surjectionToAutomaton l then assert false else assert true 
+l = {{{1,2,1,2,3}}}
+try A = surjectionToAutomaton l then assert false else assert true 
+l = {{1,2,1,2,3}}
+try A = surjectionToAutomaton l then assert true else assert false 
+  
+///
+
 
 end
 ----------
 
 restart
+loadPackage "RegularLanguages"
 installPackage "RegularLanguages"
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
-A = automaton({0,1},3,tmats,{2})
-A {0,1,0,0,1,0,1,0}
-A {1,1}
+A = automaton({a,b},3,tmats,{2}) -- accepts words with two b's in a row
+isDeterministic A
+A {a,b,a,a,b,a,b,a}
+A {b,b}
 AA = cat(A,A)
-AA {0,1,1,1,1}
-AA {0,1,1,1}
+isDeterministic AA
+AA {a,b,b,a,b,b}
+AA {a,b,b,a,b,a}
 A' = kleeneStar(A)
-A' {1}
-A' {1,1,1,1}
+A' {b}
+A' {b,b,b,b}
 B = wordAutomaton({a,b}, word {a,a,b})
 B' = kleeneStar B
 B' {a,a,b,a,a,b}
 B' {a,a,b,b}
-tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
-A = automaton({0,1},3,tmats,{1,2})
-trim A
+automatonHS(B',{1,1})
 
+A = wordAutomaton({1},word{1})
+B = kleeneSetAutomaton({1},{1})
+AB = cat(A,B)
+ABA = cat(AB,A)
+ABAB = cat(ABA,B)
+
+needsPackage "RegularLanguages"
 needsPackage "EquivariantGB"
 T = frac(QQ[s,t])
 S = {symbol x, symbol y}
@@ -422,27 +1106,6 @@ R = buildERing(S,{1,1},QQ,2) -- make a ring with 2 variable orbits, x,y
 f = y_1*x_0 - x_1*y_0 -- {f} is an EGB for 2x2 minors
 A = idealAutomaton {f}; -- A rejects monomials in the intial ideal of {f} and words not in standard form
 h = 1 + s*automatonHS(A,{s,t,t}) -- the shift operator gets weight s, and x,y both get weight t
-
-S = {symbol x}
-R = buildERing(S,{1},QQ,2)
-A = idealAutomaton {x_0^2,x_0*x_1};
-h = 1 + s*automatonHS(A,{s,t})
-
-
-
-
-S = {symbol x, symbol y}
-w = monomialToWord f
-A1 = wordAutomaton(w,{rho}|S)
-B = commAutomaton({rho}|S)
-A = productAutomaton(A1,B)
-
-S = {symbol x}
-R = buildERing(S,toList(#S:1),QQ,1)
-m = x_0^2
-exponentMatrix m
-w = monomialToWord m
-A = wordAutomaton(w,{rho}|S)
 
 
 
@@ -471,4 +1134,21 @@ A = new Automaton from {
 	accepts => set Acc
 	}
 
-NFA2DFA A
+tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{0,0,0},{1,1,1}}}
+A = automaton({0,1},3,tmats,{1,2})
+NFAtoDFA A
+
+S = {0,1,2}
+A = setAutomaton(S,{1})
+B = setAutomaton(S,{1})
+B = kleeneStar(B)
+
+path = append(path,"~/OIModules/OIModules/")
+S = {0,1,2}
+A = setAutomaton(S,{1})
+B = setAutomaton(S,{1})
+B = kleeneStar(B)
+A = cat(A,B)
+
+kleeneStar(union(wordAutomaton({a,b},word{a}),wordAutomaton({a,b},word{b})))
+
