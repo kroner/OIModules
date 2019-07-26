@@ -391,8 +391,6 @@ OIModuleMap OIObject := matrix => (phi, obj) -> (
 	for j from 0 to ((length maps)-1) do (
 	   ep := maps_j;
 	   imageEpMatrix := M ep;
-	   print imageEpMatrix;
-	   print matrix(imageGens_i);
 	   imageGenMatrix := imageEpMatrix*matrix(imageGens_i);
 	   vectors = append(vectors, flatten(entries(imageGenMatrix)));
 	   )	
