@@ -228,6 +228,17 @@ automatonHS(Automaton) := A -> (
     automatonHS(A,apply(n,i->t))
     )
 
+hilbertSeries(Automaton) := o -> A -> (
+    k := #A.alphabet;
+    x := local x;
+    R := ZZ[x_1..x_k];
+    T := degreesRing R;
+    T = frac(ZZ[gens T]);
+    weights := apply(gens R, v -> T_(degree v));
+    print weights;
+    automatonHS(A,weights)
+    ) 
+
 -- remove unreachable states from an automaton
 trim Automaton := o -> A -> (
     S := A.alphabet;
@@ -1133,6 +1144,7 @@ installPackage "RegularLanguages"
 R = "112*111(22)*"
 A = regexAutomaton({"1","2"},R)
 A "112221112222"
+hilbertSeries A
 
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
 A = automaton({a,b},3,tmats,{2}) -- accepts words with two b's in a row
