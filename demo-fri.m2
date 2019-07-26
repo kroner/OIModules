@@ -35,68 +35,79 @@ epsilon tau
 
 OIHom(n,m)
 
--- as well as a "lex" order on arrows in OI:
+-- as well as the "Lex" order on arrows in OI
 
 sort oo
 
--- for a fixed ring R, an OI-module is a functor from OI to R-mod.
+-*
+for a fixed ring R, an OI-module is a functor from OI to R-mod.
 
--- Naive example: think: V : OI -> R-mod, where V([n]) is a free
--- R-module with basis indexed by [n], and where the arrows in OI
--- induce R-linear maps as expected R-linear maps
+Naive example: think: V : OI -> R-mod, where V([n]) is a free
+R-module with basis indexed by [n], and where the arrows in OI
+induce R-linear maps as expected R-linear maps
 
--- more generally, the principle projective OI-module P_n for
--- non-negative n has P_n([k]) the free R-module indexed by
--- Hom([n],[k]), with morphisms induced by post-composition
+more generally, the principle projective OI-module P_n for
+non-negative n has P_n([k]) the free R-module indexed by
+Hom([n],[k]), with morphisms induced by post-composition
 
--- the finitely-generated free OI-modules are precisely the direct
--- sums of finitely many principle projectives. These are implemented.
+the finitely-generated free OI-modules are precisely the direct
+sums of finitely many principle projectives. These are implemented.
+*-
 
 R = ZZ/59[x,y]
 A = makeOIAlgebra R
 
--- the naive example from above
+-*
+the naive example from above
+*-
 
 P1 = A^{1}
 
--- OI-Modules are functors: you can plug in OI objects:
+-*
+OI-Modules are functors: you can plug in OI objects,
+*-
 
 P1 5
 P1 9
 
-
--- you can plug in OI-morphisms:
+-*
+and you can plug in OI-morphisms.
+*-
 
 P1 epsilon
 
--- and it respects composition:
+-*
+Functors had better respect composition.
+*-
 
 P1 (epsilon tau) == (P1 epsilon) * (P1 tau)
 
--- More general free modules are implemented:
+-*
+General (finitely-generated) free modules are implemented:
+*-
 
 F = A^{2,3,5}
 
--- ranks grow binomially. Things can be a bit slow (about four seconds here:)
+-*
+ranks grow binomially in [n].
+Things can be a bit slow (about four seconds here:)
+*-
+
 time apply(20, i -> F i)
 
 -- but OI-modules cache these computations, so its only slow once
 
 time apply(20, i -> F i)
 
-peek F.cache
-
--- (still a functor)
-
-F (epsilon tau) == (F epsilon) * (F tau)
-
--- maps between (free) OI modules are natural transformations. For
--- maps between free modules, the entire map is specified by the
--- images of the generators of the source OI module
+maps between (free) OI modules are natural transformations. For
+maps between free modules, the entire map is specified by the
+images of the generators of the source OI module
 
 G = A^{1,1,2}
 
--- So to specify a map from F to G, we need to choose one element each of
+-*
+to specify a map from F to G, we need to choose one element each of
+*-
 
 G 2
 G 3
@@ -116,9 +127,7 @@ phi 3
 phi 6
 
 -*
-
-This square better commute!
-
+To be a natural transformation, this square better commute:
 (the horizontal maps come from phi, vertical from epsilon)
 
 (G 5) <----- (F 5)
@@ -128,23 +137,29 @@ This square better commute!
   v            v
 (G 9) <----- (F 9)
 
+(it does)
 *-
 
 (G epsilon) * (phi 5) ==  (phi 9) * (F epsilon)
 
--- if we make another nat'l transformation, this one from G to a new free OIModule:
+-*
+Let's make another map, this one from G to a new free OIModule H:
+*-
 
 H = A^{2,2}
 psi = oiModuleMap(H,G, {random(H 1, R^1), random(H 1, R^1),random(H 2, R^1)})
 
--- we can compose them
+-*
+we can compose maps between OIModules, just like with matrices
+*-
 
 psi * phi
 
--- this looks correct but it should not be saying "free"
+-*
+this looks correct but it should not be saying "free"
+*-
 
-coker phi
-
+coker psi
 image phi
 
 -*
