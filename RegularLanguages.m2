@@ -130,7 +130,7 @@ Automaton List := (A,L) -> A (word L)
 Automaton String := (A,s) -> A (word s)
 
 net Automaton := A -> (
-    "Automaton on states "|net(A.states)
+    "Automaton on alphabet "|net(A.alphabet)|" with "|net(#A.states)|" states"
     )
 
 complement(Automaton) := Automaton => A -> (
