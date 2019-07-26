@@ -1,14 +1,16 @@
 restart
 installPackage "OIModules"
 
--- OI is the category where the objects are the totally ordered finite
--- sets, and the arrows are the order-preserving injective functions.
+-*
+OI is the category where the objects are the totally ordered finite
+sets, and the arrows are the order-preserving injective functions.
 
--- up to isomorphism, there's only one object in OI for each
--- non-negative n \in ZZ, namely {1, 2, ..., n} which we denote by
--- [n]. And there are binomial(m,n) arrows from [n] to [m].
+up to isomorphism, there's only one object in OI for each
+non-negative n \in ZZ, namely {1, 2, ..., n} which we denote by
+[n]. And there are binomial(m,n) arrows from [n] to [m].
 
--- We've implemented this category.
+We've implemented this category.
+*-
 
 k = oiObject 3
 n = oiObject 5
@@ -18,6 +20,7 @@ tau = oiMorphism {2,4,5}
 
 source tau
 target tau
+set source tau
 tau 1
 tau 2
 tau 3
@@ -49,7 +52,7 @@ sort oo
 -- the finitely-generated free OI-modules are precisely the direct
 -- sums of finitely many principle projectives. These are implemented.
 
-R = ZZ/31991[x,y]
+R = ZZ/59[x,y]
 A = makeOIAlgebra R
 
 -- the naive example from above
@@ -129,17 +132,37 @@ This square better commute!
 
 (G epsilon) * (phi 5) ==  (phi 9) * (F epsilon)
 
+-- if we make another nat'l transformation, this one from G to a new free OIModule:
 
+H = A^{2,2}
+psi = oiModuleMap(H,G, {random(H 1, R^1), random(H 1, R^1),random(H 2, R^1)})
 
--- this looks correct but it should not say "free"
+-- we can compose them
+
+psi * phi
+
+-- this looks correct but it should not be saying "free"
 
 coker phi
 
 image phi
 
--- not implemented yet: kernels. Needs groebner stuff.
+-- not implemented yet: Things that need Groebner bases.
 
--- the farther future: using Groebner bases for kernels, images,
--- cokernels, free resolutions. Regular Languages for Hilbert
--- functions / series. Modules over more general (non-constant)
--- OI-algebras and OI-ideals. A lot.
+-*
+the dream: to be able to do things like
+
+gb image phi
+
+res image phi -- (with a specified homological degree bound)
+
+HH(psi,phi)
+
+hilbertSeries ker phi (when this makes sense)
+
+And, in the farther future:
+
+more general OI-algebras, where (for example) A(n) = kk[x_1..x_n],
+along with their ideal theory module theory.
+
+*-
