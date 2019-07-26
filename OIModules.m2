@@ -22,7 +22,6 @@ newPackage( "OIModules",
     AuxiliaryFiles => false)
 
 export {
-    "ConstantOIAlgebra",
     "oiMonomialsToHilbert",
     "OIInitial",
     "OIObject",
@@ -34,8 +33,6 @@ export {
     "OIMonomialtoMonomial",
     "OIMonomials",
     "OIMontoHilbert",
-    "Hilb",
-    "OIModule",
     "isOIMonomial",
     "OIDivides",
     "OIDivider",
@@ -49,28 +46,21 @@ export {
     "OIGroebner",
     "OIDivideList",
     "getOIAlgebra",
-    "getWidthList",
-    "oiModuleMap",
-    "getImageGensList",
-    "idOI"
+    "getWidthList"
     }
 
-protect \ {widthList,OIAlgebra,OIBasis,imageGensList,Generators,Relations,isFree}
+protect \ {widthList,OIAlgebra,OIBasis}
 
 ---------------
 -- New types --
 ---------------
 
-OIObject = new Type of VisibleList
-OIMorphism = new Type of HashTable
+FiniteTotallyOrderedSet = new Type of VisibleList
+OrderPreservingInjectiveFunction = new Type of HashTable
+ConstantOIAlgebra = new Type of HashTable
 OIModule = new Type of HashTable
-OIModuleElement = new Type of VisibleList
-OIModuleMap = new Type of HashTable  
-
-ConstantOIAlgebra = new Type of MutableHashTable
-ConstantOIAlgebra.synonym = "constant OI-Algebra"
-ConstantOIAlgebra.GlobalAssignHook = globalAssignFunction
-ConstantOIAlgebra.GlobalReleaseHook = globalReleaseFunction
+--OIModuleElement = new Type of VisibleList  
+OIModuleElement = new Type of HashTable
 -----------------------
 -- Type constructors --
 -----------------------
@@ -346,76 +336,68 @@ OrderPreservingInjectiveFunction == OrderPreservingInjectiveFunction := (a,b) ->
 	
 	
 
--- constructor for OIObject objects
+-- constructor for FiniteTotallyOrderedSet objects
 
-oiObject = method()
-oiObject ZZ := OIObject => n -> (
-    new OIObject from toList(1..n)
+OIObject = method()
+
+OIObject ZZ := FiniteTotallyOrderedSet => n -> (
+    new FiniteTotallyOrderedSet from toList(1..n)
     )
-oiObject OIObject := OIObject => obj -> obj
 
-net OIObject := (obj) -> (
+net FiniteTotallyOrderedSet := (obj) -> (
     "[" | (toString length obj) |"]"
     )
 
-toString OIObject := (obj) -> (
+toString FiniteTotallyOrderedSet := (obj) -> (
     toString net obj
     )
 
-oiMorphism = method()
+OIMorphism = method()
 
-oiMorphism List := OIMorphism => (l) -> (
-    new OIMorphism from {
-	symbol source => oiObject length l,
-	symbol target => oiObject max l,
+OIMorphism List := OrderPreservingInjectiveFunction => (l) -> (
+    new OrderPreservingInjectiveFunction from {
+	symbol source => OIObject length l,
+	symbol target => OIObject max l,
 	symbol values => l
 	}
     )
 
-oiMorphism (List,ZZ) := OIMorphism => (l,n) -> (
-    new OIMorphism from {
-	symbol source => oiObject length l,
-	symbol target => oiObject n,
+OIMorphism (List,ZZ) := OrderPreservingInjectiveFunction => (l,n) -> (
+    new OrderPreservingInjectiveFunction from {
+	symbol source => OIObject length l,
+	symbol target => OIObject n,
 	symbol values => l
 	}
     )
 
-net OIMorphism := (epsilon) -> (
+net OrderPreservingInjectiveFunction := (epsilon) -> (
     vals := epsilon#(symbol values);
-    if (length vals == 0) then (
-	net 0
-	) else (
-	if (length vals == 1) then (
-	    net vals_0
-	    )
-    	else (
-    	    fold(vals, (x,y) -> (toString x) | (toString y))
-	    )
-	)
+    fold(vals, (x,y) -> (toString x) | (toString y))
     )
 
 -- get source object
 
-source OIMorphism := OIObject => (epsilon) -> (
+source OrderPreservingInjectiveFunction := OIObject => (epsilon) -> (
     epsilon#(symbol source)
     )
 
 -- get target object
 
-target OIMorphism := OIObject => (epsilon) -> (
+target OrderPreservingInjectiveFunction := OIObject => (epsilon) -> (
     epsilon#(symbol target)
     )
 
 -- apply function to integers
-OIMorphism ZZ := ZZ => (ep, n) -> (
+
+OrderPreservingInjectiveFunction ZZ := ZZ => (ep, n) -> (
     ep#(symbol values)_(n-1)
     )
 
 -- function composition
 
-OIMorphism OIMorphism := OIMorphism => (epsilon, tau) -> (
+OrderPreservingInjectiveFunction OrderPreservingInjectiveFunction := OrderPreservingInjectiveFunction => (epsilon, tau) -> (
     composedVals := (toList source tau) / (i -> tau i) / (j -> epsilon j);
-    new OIMorphism from {
+    new OrderPreservingInjectiveFunction from {
 	symbol source => source tau,
 	symbol target => target epsilon,
 	symbol values => composedVals
@@ -424,7 +406,7 @@ OIMorphism OIMorphism := OIMorphism => (epsilon, tau) -> (
 
 -- compare morphisms in OI
 
-OIMorphism ? OIMorphism := (ep, tau) -> (
+OrderPreservingInjectiveFunction ? OrderPreservingInjectiveFunction := (ep, tau) -> (
     if source ep != source tau then (
 	symbol incomparable
 	)
@@ -438,22 +420,14 @@ OIMorphism ? OIMorphism := (ep, tau) -> (
 	)
     )
 
-OIMorphism == OIMorphism := Boolean => (ep, tau) -> (
-    if (source ep == source tau and target ep == target tau and ep#(symbol values) == tau#(symbol values)) then (
-	true
-	) else (
-	false
-	)
-    )
-
 OIHom = method()
 
-OIHom (OIObject, OIObject) := List => (ob1, ob2) -> (
-    subsets(toList ob2, length ob1) / (l -> oiMorphism(l,length ob2))
+OIHom (FiniteTotallyOrderedSet, FiniteTotallyOrderedSet) := List => (ob1, ob2) -> (
+    subsets(toList ob2, length ob1) / (l -> OIMorphism(l,length ob2))
     )
 
 OIHom (ZZ,ZZ) := List => (m,n) -> (
-    OIHom(oiObject m, oiObject n)
+    OIHom(OIObject m, OIObject n)
     )
 
 makeOIAlgebra = method()
@@ -462,156 +436,66 @@ makeOIAlgebra Ring := ConstantOIAlgebra => (K) -> (
     new ConstantOIAlgebra from {symbol ring => K}
     )
 
-ring ConstantOIAlgebra := (A) -> A#(symbol ring)
+net ConstantOIAlgebra := (A) -> (
+    "The constant OI-algebra determined by "| net A#(symbol ring)
+    )
 
-oiModule = method(Options=>{Generators=>null,Relations=>null})
-oiModule(ConstantOIAlgebra,List) := OIModule => o -> (A,l) -> (
+ConstantOIAlgebra ^ List := OIModule => (A,l) -> (
     new OIModule from {
-	cache => new MutableHashTable from {},
-	numgens => length l,
-	widthList => l,
-	OIAlgebra => A,
-	generators => o.Generators,
-	relations => o.Relations,
-	isFree => o.Generators === null
+	symbol cache => new MutableHashTable from {},
+	symbol numgens => length l,
+	symbol widthList => l,
+	symbol OIAlgebra => A
 	}
     )
 
-net OIModule := M -> (
-    if M.isFree then "Free OI-module on "|net(M.widthList)
-    else "OI-module generated by "|net(M#generators)
-    )
-
-ConstantOIAlgebra ^ List := OIModule => (A,l) -> oiModule(A,l)
-
 getWidthList = method()
-getWidthList OIModule := List => (M) -> M.widthList
+
+getWidthList OIModule := List => (M) -> (
+    M#(symbol widthList)
+    )
 
 getOIAlgebra = method()
-getOIAlgebra OIModule := ConstantOIAlgebra => (M) -> M.OIAlgebra
+
+getOIAlgebra OIModule := ConstantOIAlgebra => (M) -> (
+    M#(symbol OIAlgebra)
+    )
+
 
 OIModule ++ OIModule := OIModule => (M,N) -> (
-    A := getOIAlgebra M;
-    if (ring A =!= ring getOIAlgebra N) then
-      error "expected OIModules over the same OIAlgebra";
-    oiModule(A, getWidthList M | getWidthList N) 
+    if ((getOIAlgebra M).ring) =!= ((getOIAlgebra N).ring) then
+      error "expected OIModules over the same OIAlgebra";  
+    new OIModule from {
+	symbol cache => hashTable{},
+	symbol numgens => M#(symbol numgens) + N#(symbol numgens),
+	symbol widthList => getWidthList M | getWidthList N	
+	}    
     )
 
-OIModule OIObject := Module => (M,n) -> (
-    if M.cache #? n then M.cache # n
-    else (
-	phi := M#generators;
-	psi := M#relations;
-	naturalBasis := flatten (M.widthList / (w -> sort OIHom(oiObject w,n)));
-	nthModule := if phi =!= null then image phi oiObject n else (
-	    nthModuleRank := length naturalBasis;	
-	    underlyingRing := ring getOIAlgebra M;
-	    underlyingRing^nthModuleRank
-	    );
-	if psi =!= null then nthModule = nthModule/image(psi n);
-	nthModule.cache#(symbol OIBasis) = naturalBasis;
-	M.cache#n = nthModule;
+OIModule FiniteTotallyOrderedSet := Module => (M,n) -> (
+    if (M#(symbol cache) #? n) then (
+ 	M#(symbol cache) # n
+	)
+    else (	
+	naturalBasis := flatten (M#(symbol widthList) / (w -> sort OIHom(OIObject w,n)));
+	nthModuleRank := length naturalBasis;	
+	underlyingRing := M#(symbol OIAlgebra)#(symbol ring);
+	nthModule := underlyingRing^nthModuleRank;
+	nthModule#cache#OIBasis = naturalBasis;
+	M#(symbol cache)#n = nthModule;
 	nthModule
-    	)
-    )
-
-OIModule ZZ := Module => (M,n) -> M (oiObject n)
-
-OIModule OIMorphism := (Matrix) => (M,ep) -> (
-    sourceModule := M source ep;
-    targetModule := M target ep;
-    summandMatrices := M#widthList / (w -> inducedMorphism(ep,w));
-    integerMatrix := fold(summandMatrices, (a,b) -> a++b);
-    ringMatrix := sub(integerMatrix, ring getOIAlgebra M);
-    map(targetModule, sourceModule, ringMatrix)
-    )
-
-inducedMorphism = method()
-
--- given a principle projective P_n and an OImorphism ep, the matrix for the induced map
--- P_n(b) <- P_n(a) (here, ep is a morphisms from [a] to [b])
-
-inducedMorphism (OIMorphism,ZZ) := Matrix => (ep,n) -> (
-    sourceBasis := sort OIHom(oiObject n, source ep);
-    targetBasis := sort OIHom(oiObject n, target ep);
-    matrixEntriesFunction := (i,j) -> (
-	if (ep sourceBasis_j == targetBasis_i) then (
-	    1
-	    ) else (
-	    0
-	    )
-	);
-    map(ZZ^(length targetBasis), ZZ^(length sourceBasis), matrixEntriesFunction)
+	)
     )
 
 getOIBasis = method()
 
 getOIBasis Module := List => (M) -> (
-    if (M.cache #? (symbol OIBasis)) then (
-	M.cache# (symbol OIBasis)
+    if (M#cache #? OIBasis) then (
+	M#cache#OIBasis
 	)
     else (
 	error "Module does not have a cached OIBasis"
 	)
-    )
-
---Add a check that the imageGensList is the same length as the 
---number of generators of M
-
-oiModuleMap = method()
-oiModuleMap (OIModule, OIModule, List) := OIModuleMap => (M,N,l) -> (
-    new OIModuleMap from {
-	source => N,
-	target => M,
-	imageGensList => l 
-	}
-    )
-
-idOI = method()
-idOI(OIModule) := OIModuleMap => (M) -> (
-    R := ring getOIAlgebra M;
-    l := apply(M.widthList, i -> matrix{{1_R}});
-    oiModuleMap(M,M,l)
-    )
-
-getImageGensList = method()
-
-getImageGensList OIModuleMap := List => phi -> phi.imageGensList
-source OIModuleMap := phi -> phi#source
-target OIModuleMap := phi -> phi#target
-
-OIModuleMap ZZ := matrix => (phi, n) -> phi (oiObject n)
-
-OIModuleMap OIObject := matrix => (phi, obj) -> (
-    n := length obj;
-    M := target phi;
-    N := source phi;
-    if (M n) == 0 then return map(M n, N n, 0);
-    if (N n) == 0 then return map(M n, N n, 0);
-    vectors := {};
-    widths := getWidthList N;
-    imageGens := getImageGensList phi;
-    for i from 0 to ((length widths)-1) when widths_i < n+1 do (
-	maps := sort OIHom(widths_i, n);
-	for j from 0 to ((length maps)-1) do (
-	   ep := maps_j;
-	   imageEpMatrix := M ep;
-	   imageGenMatrix := imageEpMatrix*matrix(imageGens_i);
-	   vectors = append(vectors, flatten(entries(imageGenMatrix)));
-	   )	
-	);
-    transpose matrix(ring getOIAlgebra M, vectors)
-    )
-
-
-image OIModuleMap := OIModule => (phi) -> (
-    M := target phi;
-    oiModule(getOIAlgebra M, getWidthList M, Generators => phi)
-    )
-
-coker OIModuleMap := OIModule => (phi) -> (
-    M := target phi;
-    oiModule(getOIAlgebra M, getWidthList M, Relations => phi)
     )
 
 beginDocumentation()
@@ -628,101 +512,18 @@ doc ///
 	    Big-picture description of package goes here.
 ///
 
-doc ///
-    Key
-    	oiMorphism
-	(oiMorphism,List)
-	(oiMorphism,List,ZZ)
-    Headline
-    	Used for creating morphisms in the category OI.
-    Usage
-    	epsilon = oiMorphism(images)
-	epsilon = oiMorphism(images, n)
-    Inputs
-    	images:List
-	    A list, specifying the images of the elements in the source.
-	n:ZZ
-	    A non-negative integer specifying the target of the morphism if the one inferred from the list of images is not correct.
-    Outputs
-    	epsilon:OIMorphism
-    Description
-    	Text
-    	    A morphism $\epsilon: [n] \rightarrow [m]$ in the category OI is determined by the list of values $\{\epsilon(1), \epsilon(2), \ldots, \epsilon(n)\}$ as well as the target $[m]$. The constructor OIMorphism takes inputs specifying these data and produces @ofClass OIMorphism@. If a target is not specified, the minimal target is inferred from the list of images.
-	Example
-	    epsilon = oiMorphism({1,4,5}, 7)
-	    tau = oiMorphism({1,3,4,5,7,8,9})
-	Text
-	    One can ask for the source or target of @ofClass OIMorphism@. Morphisms can be composed if their sources and targets are compatible, and they can be applied to @ofClass ZZ@ in their domain.
-	Example
-	    target epsilon
-	    source tau
-	    tau	epsilon
-	    epsilon 2
-    	Text
-	    The collection of all OIMorphisms between two OIObjects can be found using OIHom
-	Example
-	    sourceObj = oiObject 2;
-	    targetObj = oiObject 4;
-	    OIHom (sourceObj, targetObj)
-        Text
-	    The net used to represent @ofClass OIMorphism@ is the strings representing the images of the function, concatenated in order. This can lead to notational ambiguities where distinct morphism are printed with identical strings.
-	Example
-	    epsilon1 = oiMorphism {1,2,3,4}
-	    epsilon2 = oiMorphism ({1,2,3,4},5)
-	    epsilon3 = oiMorphism {12,34}
-	    epsilon4 = oiMorphism {1,234}
-	Text
-	    Such concise notation was chosen because these objects are typically used as indices for @ofClass IndexedVariable@, where their primary purpose is bookkeeping for OI-algebras.
-///
-
-doc ///
-    Key
-    	oiModuleMap
-    Headline
-    	Used for creating a map between free OI-modules.
-    Usage
-    	phi = oiModuleMap(M,N,v)
-    Inputs
-    	M:OIModule
-	    A free OI-module specifying the source of the map
-	N:OIModule
-	    A free OI-module, over the same OI-algebra as M, specifying the target of the map
-	l:List
-	    A list of vectors specifying the images of each of the generators of M.
-    Outputs
-    	phi:OIModuleMap
-    Description
-    	Text
-    	    A map $\phi: M \rightarrow N$ between free OI-modules is determined by the list of vectors $\{v_1, v_2, \ldots, v_n\}$. The constructor oiMap takes inputs specifying the modules and vectors and produces an object of @ofClass OIModuleMap@.
-	Example
-	    R = ZZ/101[x,y,z]
-	    A = makeOIAlgebra (R)
-	    M = A^{2,3}
-	    N = A^{1,2}
-	    v1 = transpose (matrix {{1,0,1}})
-	    v2 = transpose (matrix {{x^2,0,y^2,0,z^2,0}})
-	    phi = oiModuleMap(M,N,{v1,v2})
-	Text
-	    One can ask for the source or target of @ofClass OIModuleMap@. One can also get the list of vectors specifying the images of the generators of the source free module.
-	Example
-	    source phi
-	    target phi
-	    getImageGensList phi
-        
-///
-
 end
 
 
 restart
 installPackage "OIModules"
-OIObject
+FiniteTotallyOrderedSet
 OIModuleElement
 List
-M={{1,oiMorphism({1,2,9})}}
+M={{1,OIMorphism({1,2,9})}}
 M_0_1
-oiMorphism
-oiMorphism {1}
+OIMorphism
+OIMorphism {1}
 
 
 
@@ -730,11 +531,11 @@ m = OIElement M
 m
 OIMonomials m
 for i in m do print i_1
-ob1 = oiObject 3
-ob2 = oiObject 6
+ob1 = OIObject 3
+ob2 = OIObject 6
 OIHom(ob1, ob2)
-ep = oiMorphism {1,2,4}
-tau  = oiMorphism {1,3,5,8}
+ep = OIMorphism {1,2,4}
+tau  = OIMorphism {1,3,5,8}
 
 
 -- operator precedece
@@ -751,8 +552,8 @@ tau  = oiMorphism {1,3,5,8}
 
 --quit
 --installPackage "OIModules"
---M = oiMorphism{1,4,7,11,15,17,18}
---N = oiMorphism({1,2,3,5,7,9,18})
+--M = OIMorphism{1,4,7,11,15,17,18}
+--N = OIMorphism({1,2,3,5,7,9,18})
 --S = OIElement{{1,M}}
 --T = OIElement{{1,N}}
 --OIMontoHilbert({S})
@@ -770,71 +571,35 @@ tau  = oiMorphism {1,3,5,8}
 
 -- net of list of functionVals:
 
-A = makeOIAlgebra (ZZ/101[x,y,z])
+A = makeOIAlgebra (ZZ/2)
 M = A^{1,2,4}
-ep = oiMorphism({1,2,4})
-M ep
-ob1 = oiObject 4
+ob1 = OIObject 4
 F = M ob1
 naturalBasis = getOIBasis F
 naturalBasis / (e -> net e)
 
 
--- net problem example:
-
 restart
 installPackage "OIModules"
 
-R = QQ[x,y]
-A = makeOIAlgebra (R)
-F = A^{1,2,4}
+ob1 = OIObject 3
+ob2 = OIObject 6
+l1 = OIHom(ob1, ob1)
+l2 = OIHom(ob1, ob2)
+l3 = OIHom(ob1, ob2)
+ep = OIMorphism({1,2,4})
+tau  = OIMorphism {1,3,5,8}
 
-tau  = oiMorphism({1,3,4},5)
-getOIBasis(F 5)
-F tau
--- you can look at the modules you get by applying F to the first few values:
+A = makeOIAlgebra (ZZ/2)
+M = A^{1,2,4}
+ob1 = OIObject 3
+M ob1 
+objectList = apply(20, i -> OIObject i)
+objectList / (n -> rank (N n))
 
-testList := OIHom(4,5)
+R = ZZ/31991[x]
 
-apply(testList, i -> F i)
+F=R^3
+hashTable { a => 0, b => 1 , c => 2}
+F
 
--- or get a particular one:
-
-ob3 = oiObject 5
-M = F ob3 
-
--- now M is almost an ordinary M2 object.
--- But it has one new thing added to M.cache: a symbol, called OIBasis, which
--- records a list of morphisms in OI, used for bookkeeping the standard basis for M.
-
--- however, this list of OImorphisms can't be printed nicely  (claiming a time limit was reached):
-
-basisList = getOIBasis M
-
--- despite this seeming to work:
-
-basisList / (e -> net e)
-
--- also, I can no longer peek at the cache of M ??
-
-restart
-installPackage "OIModules"
-
-R = ZZ/31991[x,y]
-A = makeOIAlgebra (R)
-
-M = A^{2,3,5}
-N = A^{1,1,2}
-idOI N
-N 2
-g1 = random(N 2, R^1)
-g2 = random(N 3, R^1)
-g3 = random(N 5, R^1)
-
-phi = oiModuleMap(N,M,{g1, g2, g3})
-
-phi 1
-phi 2
-phi 3
-phi 4
-phi 5
