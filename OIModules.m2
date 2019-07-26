@@ -63,7 +63,7 @@ protect \ {widthList,OIAlgebra,OIBasis,imageGensList,Generators,Relations,isFree
 OIObject = new Type of VisibleList
 OIMorphism = new Type of HashTable
 OIModule = new Type of HashTable
-OIModuleElement = new Type of VisibleList
+OIModuleElement = new Type of HashTable
 OIModuleMap = new Type of HashTable  
 
 ConstantOIAlgebra = new Type of MutableHashTable
