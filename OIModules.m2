@@ -22,6 +22,19 @@ newPackage( "OIModules",
     AuxiliaryFiles => false)
 
 export {
+    "oiSyzZero",
+    "oiMonomialsToHilbert",
+    "OIInitial",
+    "OIDivides",
+    "OIDivider",
+    "OICleaner",
+    "OIGCD",
+    "repToHilb",
+    "OILCM",
+    "OIDivisionAlgorithm",
+    "OISPairs",
+    "OIGroebner",
+    "OIDivideList",
     "ConstantOIAlgebra",
     "oiObject",
     "oiMorphism",
@@ -51,7 +64,7 @@ protect \ {widthList,OIAlgebra,OIBasis,imageGensList,Generators,Relations,isFree
 OIObject = new Type of VisibleList
 OIMorphism = new Type of HashTable
 OIModule = new Type of HashTable
-OIModuleElement = new Type of VisibleList
+OIModuleElement = new Type of HashTable
 OIModuleMap = new Type of HashTable  
 
 ConstantOIAlgebra = new Type of MutableHashTable
@@ -67,79 +80,270 @@ ConstantOIAlgebra.GlobalReleaseHook = globalReleaseFunction
 
 OIElement = method()
 
-OIElement List := OIModuleElement => L -> (
-    new OIModuleElement from L)
+OIElement HashTable := OIModuleElement => H ->(
+    new OIModuleElement from H)
+    
+OICleaner = m ->(
+    templist :={};
+    for i in keys m do(
+	if m#i !=0 then templist = append(templist,{i,m#i}));
+    return OIElement(hashTable(templist)))
+    
+OIModuleElement == OIModuleElement := (a,b) ->(
+    tempbool:=true;
+    if keys a != keys b then tempbool = false
+    else for i in keys a  when tempbool == true do(
+	if a#i != b#i then tempbool = false);
+    return tempbool) 
 
 OIMonomials = method()
+OIMonomials OIModuleElement := List => H -> keys H
 
-OIMonomials OIModuleElement := List => m -> (
-     return for i in m list i_1)
-OIModuleElement + OIModuleElement := (a,b) -> (
+OIMorphism*OIModuleElement := (a,b) ->(
+    temp:={};
+    for i in keys b do(
+	temp = append(temp,{a i,b#i}));
+    return OIElement(hashTable(temp)))
+
+OIModuleElement + OIModuleElement := (a,b) ->(
     temp := {};
-    for i in a do(
-	tempbool := false;
-	for j in b do(
-	    if i_1==j_1 then(
-		temp = append(temp, {i_0+j_0,i_1});
-		tempbool = true;
-		);
-	    );
-	if tempbool == false then(
-	    temp = append(temp, i));
-	);
-    for i in b do(
-	tempbool := false;
-	for j in a do(
-	    if i_1 == j_1 then tempbool = true);
-	if tempbool == false then temp = append(temp, i));
-    return(OIElement(temp)))
+    for i in OIMonomials a do(
+	if b#?i then temp = append(temp, {i,a#i+b#i})
+	else temp = append(temp,{i,a#i}));
+    for j in OIMonomials b do(
+	if not a#?j then temp = append(temp,{j,b#j}));
+    temphash := new HashTable from temp;
+    return OICleaner(OIElement temphash))
+ZZ*OIModuleElement := (a,b) -> (OIElement(hashTable(for i in keys b list {i,a*b#i})))
+QQ*OIModuleElement := (a,b) -> (OIElement(hashTable(for i in keys b list {i,a*b#i})))
+RingElement*OIModuleElement := (a,b) -> (OIElement(hashTable(for i in keys b list {i,a*b#i})))
 
-isOIMonomial = m -> #m ==1
+OIModuleElement - OIModuleElement := (a,b) -> a+((-1)*b)
 
-OIMonomialtoMonomial = mon->(
-    assert(isOIMonomial mon);
-    t := mon_0_1;
-    m := #(target t);
-    n := #(source t);
-    R := QQ;--Base(mon);
-    x := getSymbol "x";
-    S := QQ[x_0..x_n];-- R[x_0..x_n];
-    temp :=1;
-    if n ==1 then(
-	print "here";
-	temp= temp*((S_0)^(t(1)-1))*((S_1)^(m-t(1)));
-        return {R,temp})
+
+	
+OIDivides = (a,b) ->(
+    if #(source a)!= #(source b) then( 
+    return false)
+    else if b(1) < a(1) then( 
+	return false)
     else(
-	temp= temp*(S_0)^(t(1)-1)*(S_n)^(m-t(n));
-	for i from 2 to n-1 do temp = temp*(S_i)^(t(i+1)-t(i)-1);
-	return {R,temp}))
-Hilb = L -> (
-    temp := {};
-    for i in L do temp = append(temp,OIMonomialtoMonomial i);
-    monomiallist := for i in temp list i_1;
-    I:= ideal(monomiallist);
-    return hilbertSeries I)
+	tempbool:=true;
+	for i from 1 to (#(source b)-1) do(
+	    if b(i+1)-b(i) < a(i+1)-a(i) then(
+		tempbool = false));
+	if #(target b) - b(#source b) < #(target a) - a(#source a) then tempbool = false;
+	return tempbool))
+
+OIDivider = (a,b) ->(
+    assert(OIDivides(a,b));
+    temptarget := #(target b);
+    tempfull := toList(1..temptarget);
+    templist := {};
+    tempbig:={};
+    tempsource :=toList(1..#(source a));
+    for i from 1 to #(source a) do(
+	templist = append(templist,{a(i),b(i)});
+	tempfull = delete(b(i),tempfull);
+	tempsource = delete(a(i),tempsource));
+    temphash:= hashTable(templist);
+    for i in tempsource do(
+	if i==1 then templist = append(templist,{i,tempfull_0})
+	else(
+	    tempbig={};
+	    for j in tempfull do(
+		if j>temphash#(i-1) then tempbig = append(tempbig,j));
+	    templist = append(templist,{i,tempbig_0}));
+	temphash = hashTable templist);
+    tempmorph := for i in keys temphash list temphash#i;
+    return oiMorphism(tempmorph,temptarget))
     
-OIMontoHilbert = L -> (
-    for i in L do assert(isOIMonomial i);
-    basecase := L_0;
-    n :=#source(basecase_0_1);
-    R := QQ; --TO BE REPLACED BY RING/FIELD DEPENDING ON MONOMIALS
-    x:= getSymbol "x";
-    S:=R[x_0..x_n];
+oiInitialTerms = L->(
+    temp:={};
+    for i in L do(
+	temp = append(temp,OIElement(hashTable{{OIInitial i,1}})));
+    return temp)
+
+repToHilb = L->oiMonomialsToHilbert(oiInitialTerms(OIGroebner(L)))
+
+    
+MaxOIMon = L ->(
+    temp :=L_0;
+    for i in L do if i>temp then temp = i;
+    return temp)
+    
+OIInitial = m -> MaxOIMon OIMonomials m
+
+OIDivideList = (a,b) ->(
+    temp:={};
+    for i in OIHom(target a, target b) do(
+	if (i a) ==b then temp = append(temp, i));
+    return temp)
+
+OIDivisionAlgorithm = (m,L) ->(
+    tempbool := false;
+    init:=0;
+    dummy:=m;
+    divider :=0;
+    remain := 0;
+    templist:={};
+    initialL := for i in L list {i,OIInitial i};
+    for i in initialL when (not tempbool) do(
+	for k in (keys m) when (not tempbool) do(
+	    if OIDivides(i_1,k) then tempbool = true));
+    while tempbool == true and #(keys dummy)>0 do(
+	--print("INHERE");
+	templist={};
+	for k in keys dummy do(
+	    for i in initialL do(
+		if OIDivides(i_1,k) then templist=append(templist,k)));
+	--print("NEXT COMMENT");
+	init=MaxOIMon templist;
+	for i in initialL do(
+	    if OIDivides(i_1,init) then(
+		divider = i_0;
+		break));
+--	print("COEFFICIENT",dummy#init/divider#(OIInitial divider));
+--	print(OIInitial(divider),source OIInitial(divider), target OIInitial(divider),init, source init, source init);	
+--	print("OIINITDIVIDER",OIInitial(divider),source OIInitial(divider),target OIInitial(divider) );
+--	print("INIT",init,source init,target init);
+	Lemon := OIInitial divider;
+	Apple := init;
+	dummy = dummy - (dummy#init/divider#(OIInitial divider))*(((OIDivideList(Lemon,Apple))_0)*divider);
+	tempbool = false;
+	for i in initialL when (not tempbool) do(
+	    for k in (keys dummy) when (not tempbool) do(
+	        if OIDivides(i_1,k) then tempbool = true));	
+	);
+    return dummy)
+    
+OIGCD = (a,b) ->(
+    tempa:={a(1)-1};
+    tempb:={b(1)-1};
+    temp:={};
+    tempreturn:={};
+    for i from 1 to (#(source a)-1) do(
+	tempa = append(tempa,a(i+1)-a(i)-1);
+	tempb = append(tempb,b(i+1)-b(1)-1));
+    tempa = append(tempa,#target(a) - a(#(source a)));
+    tempb = append(tempb,#target(b) - b(#(source b)));
+    for i from 0 to (#tempa-1) do temp = append(temp,min(tempa_i,tempb_i));
+    tempreturn = {temp_0+1};
+    for i from 1 to (#temp-2) do(
+        tempreturn = append(tempreturn,temp_i+tempreturn_(i-1)+1));
+    return oiMorphism(tempreturn,temp_(#temp-1)+tempreturn_(#tempreturn-1)))
+    
+OILCM = (a,b) ->(
+    tempa:={a(1)-1};
+    tempb:={b(1)-1};
+    temp:={};
+    tempreturn:={};
+    for i from 1 to (#(source a)-1) do(
+	tempa = append(tempa,a(i+1)-a(i)-1);
+	tempb = append(tempb,b(i+1)-b(1)-1));
+    tempa = append(tempa,#target(a) - a(#(source a)));
+    tempb = append(tempb,#target(b) - b(#(source b)));
+    for i from 0 to (#tempa-1) do temp = append(temp,max(tempa_i,tempb_i));
+    tempreturn = {temp_0+1};
+    for i from 1 to (#temp-2) do(
+        tempreturn = append(tempreturn,temp_i+tempreturn_(i-1)+1));
+    return oiMorphism(tempreturn,temp_(#temp-1)+tempreturn_(#tempreturn-1)))
+
+
+
+oiSyzZero = (a,b) -> (         --EVENTUALLY SHOULD REMOVE DUPLICATES I.E. SYZ0 SHOULDNT HAVE (f,g) and (g,f)
+    mona := (keys a)_0;
+    monb := (keys b)_0;
+    temp:={};
+    newtemp := {};
+    tempbool := false;
+    targetstart := max(#(target mona),#(target monb));
+    maxtarget := #(target mona)+#(target monb)-#(source mona);
+    for i from targetstart to maxtarget do(
+	for h in OIHom(#(target mona),i) do(
+	    for h' in OIHom(#(target monb), i) do(
+	            if h*a == h'*b then temp = append(temp, (h,h')))));
+    for k from 1 to #temp do(
+	tempbool = false;
+	h := temp_(-k)_0;
+	for l from 0 to #temp-k-1 do(
+	    f:=temp_l_0;
+	    for morph in OIHom(target f,target h) do(
+		if (morph temp_l_0,morph temp_l_1)== temp_(-k) then tempbool = true));
+	if not tempbool then newtemp = append(newtemp,temp_(-k)));
+    return newtemp)
+
+OISPairs = (a,b)->(
     temp :={};
+    inita:=OIInitial a;
+    initb:=OIInitial b;
+    tempsyz:=oiSyzZero(OIElement(hashTable{{inita,1}}),OIElement(hashTable{{initb,1}}));
+    for i in tempsyz do(
+	temppair := (b#initb)*(i_0*a) - (a#inita)*(i_1*b);
+	if #(keys temppair)>0 then temp = append(temp,(b#initb)*(i_0*a) - (a#inita)*(i_1*b)));
+    return toList(set(temp)))     
+
+OIGroebner = L ->(								       
+    Grob:= L;									       
+    tempGrob:={};								       
+    SPolys:= {};								       
+    calculated:={};
+    while Grob != tempGrob do(							       
+	--print(Grob,tempGrob);							       
+	SPolys = {};								       
+	tempGrob = Grob;
+	tempbool := true;
+--    	print(target((keys(Grob_(-1)))_0));
+	print(Grob);
+--	for i in Grob do print(i,target (keys i)_0);
+	--print(calculated);
+	for i in tempGrob do(							       
+	    for j in tempGrob do(
+		if not member({i,j},calculated) and not member({j,i},calculated) then(			       
+		    calculated = append(calculated,{i,j});
+		    for k in OISPairs(i,j) do(				       
+		    	SPolys = append(SPolys,k)))));				       
+--	print("NUMBER OF",#SPolys);
+	for i in SPolys do(
+	    tempbool = true;
+--	    print("BEFORE DIVISION",i,Grob);
+	    Lemon := OIDivisionAlgorithm(i,Grob);
+--	    print("AFTER DIVISION");				       
+--    	    print Lemon;
+	    if keys(Lemon) !={} and not member(OIInitial Lemon,Grob/OIInitial) then(
+		for Apple in Grob do(
+		    if OIDivides(OIInitial Apple,OIInitial Lemon) then tempbool = false);
+		if tempbool == true then Grob = append(Grob,(1/Lemon#(OIInitial Lemon))*Lemon))));
+    return(Grob))
+    
+oiMonomialsToHilbert = L ->(
+    basecase:= L_0;
+    basemorphism := (keys basecase)_0;
+    n := #source basemorphism;
+    R := QQ; --TO BE REPLACED BY ARBITRARY RING
+    x := getSymbol "x";
+    S := R[x_0..x_n];
+    temp := {};
     for mon in L do(
-	tempmonomial := 1;
-	t := mon_0_1;
+	tempmonomial :=1;
+	t := (keys mon)_0;
 	m := #(target t);
 	tempmonomial = tempmonomial*(S_0)^(t(1)-1)*(S_n)^(m-t(n));
 	for i from 1 to n-1 do tempmonomial = tempmonomial*(S_i)^(t(i+1)-t(i)-1);
 	temp = append(temp,tempmonomial);
 	);
     I := ideal(temp);
-    return hilbertSeries I)
-	
-	
+    T := S^{-n};
+    return hilbertSeries (I*T))
+
+-*OrderPreservingInjectiveFunction == OrderPreservingInjectiveFunction := (a,b) ->(
+    if #(source a) != #(source b) then return false
+    else if #(target a)!= #(target b) then return false
+    else(
+	tempbool := true;
+	for i from 1 to #(source a) do(
+	    if a(i) != b(i) then tempbool = false);
+	return tempbool))   *-
 
 -- constructor for OIObject objects
 
@@ -268,13 +472,20 @@ oiModule(ConstantOIAlgebra,List) := OIModule => o -> (A,l) -> (
 	OIAlgebra => A,
 	generators => o.Generators,
 	relations => o.Relations,
-	isFree => o.Generators === null
+	isFree => (o.Generators === null and o.Relations === null)
 	}
     )
 
 net OIModule := M -> (
     if M.isFree then "Free OI-module on "|net(M.widthList)
     else "OI-module generated by "|net(M#generators)
+    )
+
+gens OIModule := o -> M -> (
+    if M#generators =!= null then M#generators else (
+	phi := idOI(M);
+	phi#imageGensList
+	)
     )
 
 ConstantOIAlgebra ^ List := OIModule => (A,l) -> oiModule(A,l)

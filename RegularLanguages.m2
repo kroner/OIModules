@@ -34,7 +34,9 @@ export {
     "automatonHS",
     "NFAtoDFA",
     "cat",
-    "kleeneSetAutomaton"
+    "kleeneSetAutomaton",
+    "isContained",
+    "sameLanguage"
      }
 
 protect \ {arrows, accepts, states, alphabet, initial, transitions, deterministic}
@@ -130,7 +132,7 @@ Automaton List := (A,L) -> A (word L)
 Automaton String := (A,s) -> A (word s)
 
 net Automaton := A -> (
-    "Automaton on states "|net(A.states)
+    "Automaton on alphabet "|net(A.alphabet)|" with "|net(#A.states)|" states"
     )
 
 complement(Automaton) := Automaton => A -> (
@@ -225,6 +227,17 @@ automatonHS(Automaton) := A -> (
     use T;
     automatonHS(A,apply(n,i->t))
     )
+
+hilbertSeries(Automaton) := o -> A -> (
+    k := #A.alphabet;
+    x := local x;
+    R := ZZ[x_1..x_k];
+    T := degreesRing R;
+    T = frac(ZZ[gens T]);
+    weights := apply(gens R, v -> T_(degree v));
+    print weights;
+    automatonHS(A,weights)
+    ) 
 
 -- remove unreachable states from an automaton
 trim Automaton := o -> A -> (
@@ -379,6 +392,16 @@ regexAutomaton(List,List) := (S,R) -> (
 	if D =!= null then D else wordAutomaton(S, word {})
 	) else wordAutomaton(S, word R)
     )
+
+isContained = method()
+isContained(Automaton,Automaton) := (A,B) -> (
+    if A.alphabet != B.alphabet then return false;
+    C := trim intersection(A, complement B);
+    #C.accepts == 0
+    )
+
+sameLanguage = method()
+sameLanguage(Automaton,Automaton) := (A,B) -> isContained(A,B) and isContained(B,A)
 
 
 
@@ -903,6 +926,53 @@ Node
 
 Node
     Key
+    	isContained
+	(isContained,Automaton,Automaton)
+    Headline
+        test containment of regular languages
+    Usage
+	b = isContained(A,B)
+    Inputs
+	A:Automaton
+	B:Automaton
+    Outputs
+    	b:Boolean
+    Description
+    	Text
+	    Determines if the language accepted by automaton A is contained in the language
+	    accepted by automaton B.
+	Example
+	    S = {"a","b"}
+	    A = complement wordAutomaton(S,word "")
+	    C = kleeneSetAutomaton(S,S)
+	    isContained(A,C)
+	    isContained(C,A)
+
+Node
+    Key
+    	sameLanguage
+	(sameLanguage,Automaton,Automaton)
+    Headline
+        test equality of regular languages
+    Usage
+	b = sameLanguage(A,B)
+    Inputs
+	A:Automaton
+	B:Automaton
+    Outputs
+    	b:Boolean
+    Description
+    	Text
+	    Determines if the languages accepted by automata A and B are equal.
+	Example
+            S = {"a","b"}
+	    M = matrix{{0,0,0},{1,0,0},{0,1,1}}
+	    B = automaton(S,3,{M,M},{1,2})
+	    A = complement wordAutomaton(S,word "")
+	    sameLanguage(A,B)
+
+Node
+    Key
     	NFAtoDFA
 	(NFAtoDFA, Automaton)
     Headline
@@ -1074,6 +1144,7 @@ installPackage "RegularLanguages"
 R = "112*111(22)*"
 A = regexAutomaton({"1","2"},R)
 A "112221112222"
+hilbertSeries A
 
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
 A = automaton({a,b},3,tmats,{2}) -- accepts words with two b's in a row
