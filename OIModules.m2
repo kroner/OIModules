@@ -22,6 +22,7 @@ newPackage( "OIModules",
     AuxiliaryFiles => false)
 
 export {
+    "oiSyzZero",
     "oiMonomialsToHilbert",
     "OIInitial",
     "OIObject",
@@ -151,6 +152,12 @@ MaxOIMon = L ->(
 
 OIInitial = m -> MaxOIMon OIMonomials m
 
+
+OIDivideList = (a,b) ->(
+    temp:={};
+    for i in OIHom(target a, target b) do(
+	if (i a) ==b then temp = append(temp, i));
+    return temp)
  
  
  
@@ -179,13 +186,11 @@ OIDivisionAlgorithm = (m,L) ->(
 		break));
 --	print("COEFFICIENT",dummy#init/divider#(OIInitial divider));
 --	print(OIInitial(divider),source OIInitial(divider), target OIInitial(divider),init, source init, source init);	
---	print("DIVIDED",(OIDivider(OIInitial(divider),init))*divider);
---	print("FIRST",OIDivider(OIInitial(divider),init));
 --	print("OIINITDIVIDER",OIInitial(divider),source OIInitial(divider),target OIInitial(divider) );
 --	print("INIT",init,source init,target init);
---	print(dummy#init/divider#(OIInitial divider))*(OIDivider(OIInitial divider,init)*divider);
-	dummy = dummy - (dummy#init/divider#(OIInitial divider))*(OIDivider(OIInitial divider,init)*divider);
---        print("DUMMY",dummy);
+	Lemon := OIInitial divider;
+	Apple := init;
+	dummy = dummy - (dummy#init/divider#(OIInitial divider))*(((OIDivideList(Lemon,Apple))_0)*divider);
 	tempbool = false;
 	for i in initialL when (not tempbool) do(
 	    for k in (keys dummy) when (not tempbool) do(
@@ -194,12 +199,6 @@ OIDivisionAlgorithm = (m,L) ->(
     return dummy)
 
 
-
-OIDivideList = (a,b) ->(
-    temp:={};
-    for i in OIHom(target a, target b) do(
-	if (i a) ==b then temp = append(temp, i));
-    return temp)
 
 
 OIGCD = (a,b) ->(
@@ -234,7 +233,42 @@ OILCM = (a,b) ->(
         tempreturn = append(tempreturn,temp_i+tempreturn_(i-1)+1));
     return OIMorphism(tempreturn,temp_(#temp-1)+tempreturn_(#tempreturn-1)))
 
+
+
+oiSyzZero = (a,b) -> (         --EVENTUALLY SHOULD REMOVE DUPLICATES I.E. SYZ0 SHOULDNT HAVE (f,g) and (g,f)
+    mona := (keys a)_0;
+    monb := (keys b)_0;
+    temp:={};
+    newtemp := {};
+    tempbool := false;
+    targetstart := max(#(target mona),#(target monb));
+    maxtarget := #(target mona)+#(target monb)-#(source mona);
+    for i from targetstart to maxtarget do(
+	for h in OIHom(#(target mona),i) do(
+	    for h' in OIHom(#(target monb), i) do(
+	            if h*a == h'*b then temp = append(temp, (h,h')))));
+    for k from 1 to #temp do(
+	tempbool = false;
+	h := temp_(-k)_0;
+	for l from 0 to #temp-k-1 do(
+	    f:=temp_l_0;
+	    for morph in OIHom(target f,target h) do(
+		if (morph temp_l_0,morph temp_l_1)== temp_(-k) then tempbool = true));
+	if not tempbool then newtemp = append(newtemp,temp_(-k)));
+    return newtemp)
+
 OISPairs = (a,b)->(
+    temp :={};
+    inita:=OIInitial a;
+    initb:=OIInitial b;
+    tempsyz:=oiSyzZero(OIElement(hashTable{{inita,1}}),OIElement(hashTable{{initb,1}}));
+    for i in tempsyz do(
+	temppair := (b#initb)*(i_0*a) - (a#inita)*(i_1*b);
+	if #(keys temppair)>0 then temp = append(temp,(b#initb)*(i_0*a) - (a#inita)*(i_1*b)));
+    return toList(set(temp))) 
+
+
+-*OISPairs = (a,b)->(
     temp :={};
     inita:=OIInitial a;
     initb:=OIInitial b;
@@ -246,22 +280,39 @@ OISPairs = (a,b)->(
     for i in tempa do(
 	for j in tempb do(
 	    temp = append(temp,(b#initb)*(i*a) - (a#inita)*(j*b))));
-    return toList(set(temp))) 
+    return toList(set(temp))) *-
 OIGroebner = L ->(								       
     Grob:= L;									       
     tempGrob:={};								       
     SPolys:= {};								       
+    calculated:={};
     while Grob != tempGrob do(							       
 	--print(Grob,tempGrob);							       
 	SPolys = {};								       
-	tempGrob = Grob;							       
+	tempGrob = Grob;
+	tempbool := true;
+--    	print(target((keys(Grob_(-1)))_0));
+	print(Grob);
+--	for i in Grob do print(i,target (keys i)_0);
+	--print(calculated);
 	for i in tempGrob do(							       
-	    for j in tempGrob do(						       
-		if i!=j then for k in OISPairs(i,j) do(				       
-		    SPolys = append(SPolys,k))));				       
-	for i in SPolys do(							       
-	    if keys(OIDivisionAlgorithm(i,tempGrob)) !={} then Grob = append(Grob,i)));
-    return(Grob))								       
+	    for j in tempGrob do(
+		if not member({i,j},calculated) and not member({j,i},calculated) then(			       
+		    calculated = append(calculated,{i,j});
+		    for k in OISPairs(i,j) do(				       
+		    	SPolys = append(SPolys,k)))));				       
+--	print("NUMBER OF",#SPolys);
+	for i in SPolys do(
+	    tempbool = true;
+--	    print("BEFORE DIVISION",i,Grob);
+	    Lemon := OIDivisionAlgorithm(i,Grob);
+--	    print("AFTER DIVISION");				       
+--    	    print Lemon;
+	    if keys(Lemon) !={} and not member(OIInitial Lemon,Grob/OIInitial) then(
+		for Apple in Grob do(
+		    if OIDivides(OIInitial Apple,OIInitial Lemon) then tempbool = false);
+		if tempbool == true then Grob = append(Grob,(1/Lemon#(OIInitial Lemon))*Lemon))));
+    return(Grob))
 
 		     
         
@@ -372,7 +423,7 @@ OIMorphism (List,ZZ) := OrderPreservingInjectiveFunction => (l,n) -> (
 
 net OrderPreservingInjectiveFunction := (epsilon) -> (
     vals := epsilon#(symbol values);
-    fold(vals, (x,y) -> (toString x) | (toString y))
+    (fold(vals, (x,y) -> (toString x) |","| (toString y)))|","| (net target epsilon)
     )
 
 -- get source object
