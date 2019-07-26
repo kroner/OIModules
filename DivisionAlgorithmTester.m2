@@ -33,11 +33,17 @@ oiMonomialsToHilbert({B,C})
 
 ---------------------------Groebner Functionality----------------------
 
-a = OIMorphism({1,2},3)
-b = OIMorphism{1,3}
-c = OIMorphism{2,3}
+a = oiMorphism({1,2},3)
+b = oiMorphism{1,3}
+c = oiMorphism{2,3}
 A = OIElement(hashTable{{a,1}})
 B = OIElement(hashTable{{b,1}})
 C = OIElement(hashTable{{c,1}})
-OIGroebner({A+B+C})
+repToHilb({A+B+C})
+
 OISPairs(A+B+C,A+B+C)
+
+R = QQ[x,y,z]
+
+I = ideal(x,y^2,y*z^2,z^3)
+hilbertSeries(I)

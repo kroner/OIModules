@@ -29,6 +29,7 @@ export {
     "OIDivider",
     "OICleaner",
     "OIGCD",
+    "repToHilb",
     "OILCM",
     "OIDivisionAlgorithm",
     "OISPairs",
@@ -157,6 +158,14 @@ OIDivider = (a,b) ->(
     tempmorph := for i in keys temphash list temphash#i;
     return oiMorphism(tempmorph,temptarget))
     
+oiInitialTerms = L->(
+    temp:={};
+    for i in L do(
+	temp = append(temp,OIElement(hashTable{{OIInitial i,1}})));
+    return temp)
+
+repToHilb = L->oiMonomialsToHilbert(oiInitialTerms(OIGroebner(L)))
+
     
 MaxOIMon = L ->(
     temp :=L_0;
