@@ -163,7 +163,10 @@ coker psi
 image phi
 
 -*
-not implemented yet: Anything that would require a Groebner bases.
+Not implemented yet: Anything that would require a Groebner bases.
+
+These exist for OI-modules, and can be implemented w/ some new stuff,
+some existing M2 functionality.
 *-
 
 -*
