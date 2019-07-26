@@ -975,7 +975,7 @@ assert not A "aa";
 TEST ///
 
 A = kleeneStar wordAutomaton({a,b,c},word{a});
-N = 100;
+N = 10;
 w = "";
 scan(N,i-> (assert A w; w = concatenate(w,"a")))
 assert not A concatenate(w,"b")
@@ -984,7 +984,7 @@ assert not A concatenate(w,"b")
 
 TEST ///
 R = frac(QQ[t]);
-n = 100;
+n = 10;
 A = kleeneStar setAutomaton (toList (1..n),toList (1..n));
 B = kleeneSetAutomaton (toList (1..n),toList (1..n));
 weights = toList (n:t);
@@ -1071,7 +1071,18 @@ try A = surjectionToAutomaton l then assert true else assert false
 end
 ----------
 
+l = {{1,2,3}};
+A = surjectionToAutomaton l;
+peek A 
+trim A 
+peek A
+
+S = {1,2,3}
+A = cat (setAutomaton(S,{1}),kleeneSetAutomaton(S,{1}))                     
+peek A
+                
 restart
+needsPackage("OIModules")
 loadPackage "RegularLanguages"
 installPackage "RegularLanguages"
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
@@ -1100,6 +1111,7 @@ ABAB = cat(ABA,B)
 
 needsPackage "RegularLanguages"
 needsPackage "EquivariantGB"
+needsPackage "OIModules"
 T = frac(QQ[s,t])
 S = {symbol x, symbol y}
 R = buildERing(S,{1,1},QQ,2) -- make a ring with 2 variable orbits, x,y
