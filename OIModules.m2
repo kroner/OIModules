@@ -365,9 +365,24 @@ oiModuleMap (OIModule, OIModule, List) := OIModuleMap => (M,N,l) -> (
 idOI = method()
 idOI(OIModule) := OIModuleMap => (M) -> (
     R := ring getOIAlgebra M;
-    l := apply(M.widthList, i -> matrix{{1_R}});
-    oiModuleMap(M,M,l)
+    widths := getWidthList M;
+    vectors := {};
+    n := (length widths)-1;
+    i := 0;
+    while i < n+1 do (
+	sizeMatrix := length (getOIBasis (M widths_(n-i)));
+	idMatrix := id_(R^sizeMatrix);
+	j:= 0;
+	while widths_(n-i-j) == widths_(n-i) do (
+	    idVector := idMatrix_(sizeMatrix-1-j);
+	    vectors = prepend(idVector, vectors);
+	    j = j + 1;
+	    );
+	i = i + j;
+	);
+    oiModuleMap(M,M,vectors)
     )
+
 
 getImageGensList = method()
 
@@ -633,7 +648,7 @@ A = makeOIAlgebra (R)
 
 M = A^{2,3,5}
 N = A^{1,1,2}
-idOI N
+idOI M
 N 2
 g1 = random(N 2, R^1)
 g2 = random(N 3, R^1)
