@@ -36,7 +36,7 @@ oiMonomialsToHilbert({B,C})
 ---------------------------Behaves Randomly, even though I did not purposefully add any randomness
 ---------------------------May have to try quitting/restarting a few times. Will work on the bug soon
 
-
+quit
 installPackage "OIModules"
 a = oiMorphism({1,2},3)
 b = oiMorphism{1,3}
