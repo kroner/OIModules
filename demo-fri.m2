@@ -147,7 +147,9 @@ coker phi
 
 image phi
 
--- not implemented yet: Things that need Groebner bases.
+-*
+not implemented yet: Anything that would require a Groebner bases.
+*-
 
 -*
 the dream: to be able to do things like
@@ -164,5 +166,4 @@ And, in the farther future:
 
 more general OI-algebras, where (for example) A(n) = kk[x_1..x_n],
 along with their ideal theory module theory.
-
 *-
