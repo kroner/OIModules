@@ -268,7 +268,7 @@ oiModule(ConstantOIAlgebra,List) := OIModule => o -> (A,l) -> (
 	OIAlgebra => A,
 	generators => o.Generators,
 	relations => o.Relations,
-	isFree => o.Generators === null
+	isFree => (o.Generators === null and o.Relations === null)
 	}
     )
 
