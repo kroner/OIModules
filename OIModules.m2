@@ -356,8 +356,8 @@ getOIBasis Module := List => (M) -> (
 oiModuleMap = method()
 oiModuleMap (OIModule, OIModule, List) := OIModuleMap => (M,N,l) -> (
     new OIModuleMap from {
-	source => M,
-	target => N,
+	source => N,
+	target => M,
 	imageGensList => l 
 	}
     )
@@ -379,18 +379,18 @@ OIModuleMap ZZ := matrix => (phi, n) -> phi (oiObject n)
 
 OIModuleMap OIObject := matrix => (phi, obj) -> (
     n := length obj;
-    M := source phi;
-    N := target phi;
-    if (M n) == 0 then return map(N n, M n, 0);
-    if (N n) == 0 then return map(N n, M n, 0);
+    M := target phi;
+    N := source phi;
+    if (M n) == 0 then return map(M n, N n, 0);
+    if (N n) == 0 then return map(M n, N n, 0);
     vectors := {};
-    widths := getWidthList M;
+    widths := getWidthList N;
     imageGens := getImageGensList phi;
     for i from 0 to ((length widths)-1) when widths_i < n+1 do (
 	maps := sort OIHom(widths_i, n);
 	for j from 0 to ((length maps)-1) do (
 	   ep := maps_j;
-	   imageEpMatrix := N ep;
+	   imageEpMatrix := M ep;
 	   print imageEpMatrix;
 	   print matrix(imageGens_i);
 	   imageGenMatrix := imageEpMatrix*matrix(imageGens_i);
@@ -628,7 +628,7 @@ g1 = random(N 2, R^1)
 g2 = random(N 3, R^1)
 g3 = random(N 5, R^1)
 
-phi = oiModuleMap(M,N,{g1, g2, g3})
+phi = oiModuleMap(N,M,{g1, g2, g3})
 
 phi 1
 phi 2
