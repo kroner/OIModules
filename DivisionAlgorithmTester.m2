@@ -33,6 +33,11 @@ oiMonomialsToHilbert({B,C})
 
 ---------------------------Groebner Functionality----------------------
 
+---------------------------Behaves Randomly, even though I did not purposefully add any randomness
+---------------------------May have to try quitting/restarting a few times. Will work on the bug soon
+
+
+installPackage "OIModules"
 a = oiMorphism({1,2},3)
 b = oiMorphism{1,3}
 c = oiMorphism{2,3}
@@ -47,3 +52,8 @@ R = QQ[x,y,z]
 
 I = ideal(x,y^2,y*z^2,z^3)
 hilbertSeries(I)
+
+
+S = R^{-2}
+M=I*S
+hilbertSeries(I*S)
