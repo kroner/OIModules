@@ -129,8 +129,6 @@ This square better commute!
 
 (G epsilon) * (phi 5) ==  (phi 9) * (F epsilon)
 
-
-
 -- this looks correct but it should not say "free"
 
 coker phi
