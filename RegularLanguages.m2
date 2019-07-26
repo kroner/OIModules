@@ -29,6 +29,7 @@ export {
     "kleeneStar",
     "wordAutomaton",
     "setAutomaton",
+    "regexAutomaton",
     "surjectionToAutomaton",
     "automatonHS",
     "NFAtoDFA",
@@ -338,92 +339,49 @@ surjectionToAutomaton List := L -> (
     ans
     )
 
--*
-elementToWord = method()
-elementToWord List := e -> (
-    n := source e;
-    m := target e;
-    k := 1;
-    L := for i from 1 to n list (
-	space := (e i) - k;
-	k = e i;
-	(toList (space:0))|{1}
+
+regexAutomaton = method()
+regexAutomaton(List,String) := (S,R) -> regexAutomaton(S,characters R)
+regexAutomaton(List,List) := (S,R) -> (
+    cat' := (A,B) -> (
+    	if A =!= null then (
+	    if B =!= null then cat(A,B) else A
+	    ) else B
+    	);
+    rA := (S,R) -> if #R > 0 then regexAutomaton(S,R) else null;
+    -- parse special symbols
+    i := position(R, l->(l=="(" or l=="[" or l=="*"));
+    if i =!= null then (
+	j := i;
+	B := null;
+	if R#i == "*" then (
+	    i = i-1;
+	    B = kleeneSetAutomaton(S,{R#i});
+	    ) else
+	if R#i == "(" then (
+	    j = position(R, l->l==")",Reverse => true);
+	    B = rA(S,take(R,{i+1,j-1}));
+	    if R#(j+1) == "*" then (
+	    	B = kleeneStar B;
+	    	j = j+1;
+	    );
+	) else
+	if R#i == "[" then (
+	    j = position(R, l->l=="]",Reverse => true);
+	    if R#(j+1) == "*" then (
+	    	B = kleeneSetAutomaton(S,take(R,{i+1,j-1}));
+		j = j+1;
+	    ) else B = setAutomaton(S,take(R,{i+1,j-1}));
 	);
-    (join L)|(toList (m-k):0)
-    )
-
-elementAutomaton = method()
-elementAutomaton List := e -> (
-    w := elementToWord e;
-    hashs := for i from 0 to #w-1 list (
-	if w#i == 0 then hashTable{0 => {i+1}} else hashTable{0 => {i}, 1 => {i+1}}
+	A := rA(S,take(R,i));
+	C := rA(S,take(R,j-#R+1));
+        D := cat'(cat'(A,B),C);
+	return if D =!= null then D else wordAutomaton(S, word {})
 	);
-    automaton({0,1},toList(0..#w+1),hashTable hashs,{#w})
-    )
-
-----------------------------------------------------------------------------------------------
--- OI-algebra Hilbert series methods
-
--- Minimal standard form word representation of monomail m.
--- Outputs a list of integers, where 0 is the shift operator and 1,...,k are variable orbits.
-monomialToWord = m -> (
-    M := exponentMatrix m;
-    Mlist := entries transpose M;
-    w := flatten for row in Mlist list (flatten toList apply(#row, i->toList(row#i:i+1)))|{0};
-    p := position(w, l->(l!=0), Reverse=>true);
-    take(w,p+1)
-    )
-
--- Automaton that rejects all standard form words of monomials that are
--- Inc-multiples of the monomial.
-monomialAutomaton = (m,S) -> (
-    w := monomialToWord m;
-    A := automaton(S,#w+1,toList(0..#w-1));
-    lastrho := 0;
-    for i from 0 to #w-1 do (
-	A.arrows#i#(w#i) = {i+1};
-	if w#i == 0 then lastrho = i+1
-	else A.arrows#i#0 = {lastrho};
-	);
-    A
-    )
-
--- Automaton on alphabet S that rejects words not in standard form.
--- (A word is in standard form if it does not contain subword s_js_i for j > i > 0,
--- with S = {s_0,s_1,...,s_k}.)
-commAutomaton = S -> (
-    A := automaton(S,#S,toList(0..#S-2));
-    for i from 0 to #S-2 do (
-	A.arrows#i#0 = {0};
-	for l from 0 to #S-2 do
-	    A.arrows#i#(l+1) = if l < i then {#S-1} else {l};
-	);
-    A
-    )
-
--- Inputs:
---  F - a list of monomial generators, or Groebner basis
--- Output:
---  automaton A that rejects all words in the ideal of F or not in standard form
-idealAutomaton = F -> (
-    k := numrows exponentMatrix first F;
-    rho := symbol rho;
-    S' := toList (0..k);
-    Afs := apply(F, f->wordAutomaton(monomialToWord f, S'));
-    A := commAutomaton(S');
-    for Af in Afs do A = A * Af;
-    A
+    wordAutomaton(S, word R)
     )
 
 
-T = frac(QQ[s,t])
-eHilbertSeries = F -> (
-    k := numrows exponentMatrix first F;
-    A := idealAutomaton F;
-    weights := {s}|toList(k:t);
-    1 + s*automatonHS(A,weights)
-    )
-*-
 
 beginDocumentation()
 
@@ -1085,6 +1043,11 @@ restart
 needsPackage("OIModules")
 loadPackage "RegularLanguages"
 installPackage "RegularLanguages"
+R = "1*"
+A = regexAutomaton({"1","2"},R)
+A "11211122122"
+B = kleeneSetAutomaton({"1","2"},{"1"})
+
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
 A = automaton({a,b},3,tmats,{2}) -- accepts words with two b's in a row
 isDeterministic A
