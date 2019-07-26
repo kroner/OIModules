@@ -387,7 +387,7 @@ OIModuleMap OIObject := matrix => (phi, obj) -> (
     widths := getWidthList M;
     imageGens := getImageGensList phi;
     for i from 0 to ((length widths)-1) when widths_i < n+1 do (
-	maps := OIHom(widths_i, n);
+	maps := sort OIHom(widths_i, n);
 	for j from 0 to ((length maps)-1) do (
 	   ep := maps_j;
 	   imageEpMatrix := N ep;
@@ -615,18 +615,18 @@ basisList / (e -> net e)
 restart
 installPackage "OIModules"
 
-R = ZZ/101[x,y,z]
+R = ZZ/31991[x,y]
 A = makeOIAlgebra (R)
 
-M = A^{2,3}
-N = A^{1,2}
+M = A^{2,3,5}
+N = A^{1,1,2}
 idOI N
 N 2
-g1 = map(N 2, R^1, transpose matrix {{x,y,z}})
-g2 = map(N 3, R^1, transpose matrix {{x^2,0,y^2,0,z^2,0}})
+g1 = random(N 2, R^1)
+g2 = random(N 3, R^1)
+g3 = random(N 5, R^1)
 
-l = {entries g1,entries g2}
-phi = oiModuleMap(M,N,l)
+phi = oiModuleMap(M,N,{g1, g2, g3})
 
 phi 1
 phi 2
