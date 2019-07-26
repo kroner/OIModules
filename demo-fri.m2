@@ -103,7 +103,7 @@ b = random(G 3, R^1)
 c = random(G 5, R^1)
 
 -- (no net for this)
-phi = oiModuleMap(G,F,{a,b,c})
+phi = oiModuleMap(F,G,{a,b,c})
 
 phi 0
 phi 1
@@ -113,4 +113,4 @@ phi 3
 -- the farther future: using Groebner bases for kernels, images,
 -- cokernels, free resolutions. Regular Languages for Hilbert
 -- functions / series. Modules over more general (non-constant)
--- OI-algebras and OI-ideals. A lot.		
+-- OI-algebras and OI-ideals. A lot.

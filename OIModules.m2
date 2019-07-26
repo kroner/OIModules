@@ -387,10 +387,12 @@ OIModuleMap OIObject := matrix => (phi, obj) -> (
     widths := getWidthList M;
     imageGens := getImageGensList phi;
     for i from 0 to ((length widths)-1) when widths_i < n+1 do (
-	maps := OIHom(widths_i, n);
+	maps := sort OIHom(widths_i, n);
 	for j from 0 to ((length maps)-1) do (
 	   ep := maps_j;
 	   imageEpMatrix := N ep;
+	   print imageEpMatrix;
+	   print matrix(imageGens_i);
 	   imageGenMatrix := imageEpMatrix*matrix(imageGens_i);
 	   vectors = append(vectors, flatten(entries(imageGenMatrix)));
 	   )	
