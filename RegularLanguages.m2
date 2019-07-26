@@ -915,6 +915,53 @@ Node
 
 Node
     Key
+    	isContained
+	(isContained,Automaton,Automaton)
+    Headline
+        test containment of regular languages
+    Usage
+	b = isContained(A,B)
+    Inputs
+	A:Automaton
+	B:Automaton
+    Outputs
+    	b:Boolean
+    Description
+    	Text
+	    Determines if the language accepted by automaton A is contained in the language
+	    accepted by automaton B.
+	Example
+	    S = {"a","b"}
+	    A = complement wordAutomaton(S,word "")
+	    C = kleeneSetAutomaton(S,S)
+	    isContained(A,C)
+	    isContained(C,A)
+
+Node
+    Key
+    	sameLanguage
+	(sameLanguage,Automaton,Automaton)
+    Headline
+        test equality of regular languages
+    Usage
+	b = sameLanguage(A,B)
+    Inputs
+	A:Automaton
+	B:Automaton
+    Outputs
+    	b:Boolean
+    Description
+    	Text
+	    Determines if the languages accepted by automata A and B are equal.
+	Example
+            S = {"a","b"}
+	    M = matrix{{0,0,0},{1,0,0},{0,1,1}}
+	    B = automaton(S,3,{M,M},{1,2})
+	    A = complement wordAutomaton(S,word "")
+	    sameLanguage(A,B)
+
+Node
+    Key
     	NFAtoDFA
 	(NFAtoDFA, Automaton)
     Headline
@@ -1086,15 +1133,6 @@ installPackage "RegularLanguages"
 R = "112*111(22)*"
 A = regexAutomaton({"1","2"},R)
 A "112221112222"
-
-S = {"a","b"}
-M = matrix{{0,0,0},{1,0,0},{0,1,1}}
-B = automaton(S,3,{M,M},{1,2})
-A = complement wordAutomaton(S,word "")
-sameLanguage(A,B)
-C = kleeneSetAutomaton(S,S)
-isContained(A,C)
-sameLanguage(A,C)
 
 tmats = {matrix{{1,1,0},{0,0,0},{0,0,1}}, matrix{{0,0,0},{1,0,0},{0,1,1}}}
 A = automaton({a,b},3,tmats,{2}) -- accepts words with two b's in a row
