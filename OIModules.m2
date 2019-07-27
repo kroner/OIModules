@@ -578,9 +578,10 @@ idOI(OIModule) := OIModuleMap => (M) -> (
 	k := #OIHom(oiObject M.widthList#j, oiObject M.widthList#i);
 	toList (k: if i==j then 1_R else 0_R)
 	);
-    l = apply(l, L -> transpose matrix{L});
+    l = apply(l, L -> transpose matrix{L});    
     oiModuleMap(M,M,l)
     )
+
 
 getImageGensList = method()
 
@@ -703,22 +704,23 @@ doc ///
 doc ///
     Key
     	oiModuleMap
+	(oiModuleMap, OIModule, OIModule, List)
     Headline
     	Used for creating a map between free OI-modules.
     Usage
-    	phi = oiModuleMap(M,N,v)
+    	phi = oiModuleMap(N,M,v)
     Inputs
-    	M:OIModule
-	    A free OI-module specifying the source of the map
-	N:OIModule
-	    A free OI-module, over the same OI-algebra as M, specifying the target of the map
+    	N:OIModule
+	    A free OI-module specifying the target of the map
+	M:OIModule
+	    A free OI-module, over the same OI-algebra as M, specifying the source of the map
 	l:List
 	    A list of vectors specifying the images of each of the generators of M.
     Outputs
     	phi:OIModuleMap
     Description
     	Text
-    	    A map $\phi: M \rightarrow N$ between free OI-modules is determined by the list of vectors $\{v_1, v_2, \ldots, v_n\}$. The constructor oiMap takes inputs specifying the modules and vectors and produces an object of @ofClass OIModuleMap@.
+    	    A map $\phi: M \rightarrow N$ between free OI-modules is determined by the list of vectors $\{v_1, v_2, \ldots, v_n\}$. The constructor oiModuleMap takes inputs specifying the modules and vectors and produces @ofClass OIModuleMap@.
 	Example
 	    R = ZZ/101[x,y,z]
 	    A = makeOIAlgebra (R)
@@ -726,7 +728,7 @@ doc ///
 	    N = A^{1,2}
 	    v1 = transpose (matrix {{1,0,1}})
 	    v2 = transpose (matrix {{x^2,0,y^2,0,z^2,0}})
-	    phi = oiModuleMap(M,N,{v1,v2})
+	    phi = oiModuleMap(N,M,{v1,v2})
 	Text
 	    One can ask for the source or target of @ofClass OIModuleMap@. One can also get the list of vectors specifying the images of the generators of the source free module.
 	Example
@@ -850,7 +852,7 @@ A = makeOIAlgebra (R)
 
 M = A^{2,3,5}
 N = A^{1,1,2}
-idOI N
+idOI M
 N 2
 g1 = random(N 2, R^1)
 g2 = random(N 3, R^1)
