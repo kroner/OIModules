@@ -627,6 +627,65 @@ coker OIModuleMap := OIModule => (phi) -> (
     oiModule(A, getWidthList M, Generators => M#generators, Relations => rels)
     )
 
+initialVect = v -> (
+    R := ring source v;
+    vin := for j from 0 to (numcols v)-1 list (
+    	ents := flatten entries v_{j};
+    	k := position(ents, i -> i != 0, Reverse => true);
+    	if k =!= null then (toList(k:0_R))|{1_R}|(toList(#ents-k-1:0_R)) else toList(#ents:0_R)
+	);
+    transpose matrix vin
+    )
+
+OIgb = method()
+OIgb(OIModule) := M -> (
+    A := getOIAlgebra M;
+    R := ring A;
+    phi := gens M;
+    G := getImageGensList phi;
+    widths := getWidthList source phi;
+    k := max widths;
+    lastnewk := k;
+    while k < 2*lastnewk do (
+	inG := apply(G, g->initialVect g);
+    	inphi := oiModuleMap(target phi, A^widths, inG);
+	Gk := gens gb (phi k);
+	inGk := initialVect Gk;
+	inphik = inphi k;
+	inphik = apply(numcols inphik, j->inphik_{j});
+	for i from 0 to (numcols inGk)-1 do (
+	    v := inGk_{i};
+	    b := any(inphik, w->w==v);
+	    if not b then (
+		G = append(G,Gk_{i});
+		widths = append(widths,k);
+		lastnewk = k;
+		);
+	    );
+	k = k+1;
+	);
+    oiModuleMap(target phi, A^widths, G)
+    )
+
+kernel OIModuleMap := o -> (phi) -> (
+    M := source phi;
+    N := target phi;
+    idGens := getImageGensList(idOI M);
+    phiGens := getImageGensList(phi);
+    graphGens := apply(#phiGens, i->(idGens#i)||(phiGens#i));
+    graphMap := oiModuleMap(M++N, M, graphGens);
+    G := OIgb image graphMap;
+    Gwidths := getWidthList (source G);
+    Ggens := getImageGensList G;
+    GelimIndices := select(#Ggens, i->(
+	    k := position(flatten entries Ggens#i, i -> i != 0, Reverse => true);
+	    k < numgens(M (Gwidths#i))
+	    ));
+    Gelim := apply(GelimIndices, i->Ggens#i);
+    Gelimwidths := apply(GelimIndices, i->Gwidths#i);
+    image oiModuleMap(M, A^Gelimwidths, Gelim)
+    )
+
 --composition of oiModuleMaps
 
 OIModuleMap*OIModuleMap := OIModuleMap => (psi, phi) -> (

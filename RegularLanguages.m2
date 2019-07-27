@@ -235,7 +235,6 @@ hilbertSeries(Automaton) := o -> A -> (
     T := degreesRing R;
     T = frac(ZZ[gens T]);
     weights := apply(gens R, v -> T_(degree v));
-    print weights;
     automatonHS(A,weights)
     ) 
 
