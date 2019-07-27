@@ -6,16 +6,16 @@ newPackage( "OIModules",
     Authors => {
 	{Name => "Nathan Fieldsteel",
 	    Email => "nathan.fieldsteel@uky.edu"},
-	{Name => "name2",
-	    Email => "email2"},
-	{Name => "name3",
-	    Email => "email3"},
-	{Name => "name4",
-	    Email => "email4"},
-	{Name => "name5",
-	    Email => "email5"},
-	{Name => "name6",
-	    Email => "email6"}
+	{Name => "Tom Grubb",
+	    Email => "tgrubb@ucsd.edu"},
+	{Name => "Robert Krone",
+	    Email => "rckrone@ucdavis.edu"},
+	{Name => "Erica Musgrave",
+	    Email => "erica.musgrave@huskers.unl.edu"},
+	{Name => "Jonathan Niño",
+	    Email => "ninojonathan4@gmail.com"},
+	{Name => "Steven Sam",
+	    Email => "ssam@ucsd.edu"}
 	},
     HomePage => "https://nathanfieldsteel.github.io",
     Headline => "A package for computations with OI-algebras and modules over OI-algebras",
@@ -651,7 +651,7 @@ OIgb(OIModule) := M -> (
     	inphi := oiModuleMap(target phi, A^widths, inG);
 	Gk := gens gb (phi k);
 	inGk := initialVect Gk;
-	inphik = inphi k;
+	inphik := inphi k;
 	inphik = apply(numcols inphik, j->inphik_{j});
 	for i from 0 to (numcols inGk)-1 do (
 	    v := inGk_{i};
