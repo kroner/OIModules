@@ -670,6 +670,7 @@ OIgb(OIModule) := M -> (
 kernel OIModuleMap := o -> (phi) -> (
     M := source phi;
     N := target phi;
+    A := getOIAlgebra M;
     idGens := getImageGensList(idOI M);
     phiGens := getImageGensList(phi);
     graphGens := apply(#phiGens, i->(idGens#i)||(phiGens#i));
