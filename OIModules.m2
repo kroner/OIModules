@@ -51,6 +51,7 @@ export {
     "getOIAlgebra",
     "getWidthList",
     "oiModuleMap",
+    "OIModuleMap",
     "getImageGensList",
     "idOI"
     }
@@ -482,10 +483,7 @@ net OIModule := M -> (
     )
 
 gens OIModule := o -> M -> (
-    if M#generators =!= null then M#generators else (
-	phi := idOI(M);
-	phi#imageGensList
-	)
+    if M#generators =!= null then M#generators else idOI(M)
     )
 
 ConstantOIAlgebra ^ List := OIModule => (A,l) -> oiModule(A,l)
@@ -576,8 +574,8 @@ oiModuleMap (OIModule, OIModule, List) := OIModuleMap => (M,N,l) -> (
 idOI = method()
 idOI(OIModule) := OIModuleMap => (M) -> (
     R := ring getOIAlgebra M;
-    l := for i in M.widthList list flatten for j in M.widthList list (
-	k := #OIHom(oiObject j, oiObject i);
+    l := for i from 0 to #M.widthList-1 list flatten for j from 0 to #M.widthList-1 list (
+	k := #OIHom(oiObject M.widthList#j, oiObject M.widthList#i);
 	toList (k: if i==j then 1_R else 0_R)
 	);
     l = apply(l, L -> transpose matrix{L});
@@ -616,12 +614,16 @@ OIModuleMap OIObject := matrix => (phi, obj) -> (
 
 image OIModuleMap := OIModule => (phi) -> (
     M := target phi;
-    oiModule(getOIAlgebra M, getWidthList M, Generators => phi)
+    oiModule(getOIAlgebra M, getWidthList M, Generators => phi, Relations => M#relations)
     )
 
 coker OIModuleMap := OIModule => (phi) -> (
     M := target phi;
-    oiModule(getOIAlgebra M, getWidthList M, Relations => phi)
+    A := getOIAlgebra M;
+    rels := if M#relations =!= null then (
+	oiModuleMap(M,(source rels)++(source phi),(getImageGensList rels)|(getImageGensList phi))
+	) else phi;
+    oiModule(A, getWidthList M, Generators => M#generators, Relations => rels)
     )
 
 --composition of oiModuleMaps
