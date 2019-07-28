@@ -33,7 +33,7 @@ export {
     "oiModuleMap",
     "OIModuleMap",
     
-    "OIHom",
+    "oiHom",
     "getOIBasis",
     "getWidthList",
     "getImageGensList",
@@ -191,7 +191,7 @@ OIInitial = m -> MaxOIMon OIMonomials m
 --Given two OIMorphisms a,b returns a list of all morphisms c for which c a = b.
 OIDivideList = (a,b) ->(
     temp:={};
-    for i in OIHom(target a, target b) do(
+    for i in oiHom(target a, target b) do(
 	if (i a) ==b then temp = append(temp, i));
     return temp)
 
@@ -272,15 +272,15 @@ oiSyzZero = (a,b) -> (         --EVENTUALLY SHOULD REMOVE DUPLICATES I.E. SYZ0 S
     targetstart := max(#(target mona),#(target monb));
     maxtarget := #(target mona)+#(target monb)-#(source mona);
     for i from targetstart to maxtarget do(
-	for h in OIHom(#(target mona),i) do(
-	    for h' in OIHom(#(target monb), i) do(
+	for h in oiHom(#(target mona),i) do(
+	    for h' in oiHom(#(target monb), i) do(
 	            if h*a == h'*b then temp = append(temp, (h,h')))));
     for k from 1 to #temp-1 do(
 	tempbool = false;
 	h := temp_(-k)_0;
 	for l from 0 to #temp-k-1 do(
 	    f:=temp_l_0;
-	    for morph in OIHom(target f,target h) do(
+	    for morph in oiHom(target f,target h) do(
 		if (morph temp_l_0,morph temp_l_1)==temp_(-k) then tempbool = true);
 	if not tempbool then newtemp = append(newtemp,temp_(-k))));
     newtemp = unique newtemp;
@@ -484,14 +484,14 @@ OIMorphism == OIMorphism := Boolean => (ep, tau) -> (
 	)
     )
 
-OIHom = method()
+oiHom = method()
 
-OIHom (OIObject, OIObject) := List => (ob1, ob2) -> (
+oiHom (OIObject, OIObject) := List => (ob1, ob2) -> (
     subsets(toList ob2, length ob1) / (l -> oiMorphism(l,length ob2))
     )
 
-OIHom (ZZ,ZZ) := List => (m,n) -> (
-    OIHom(oiObject m, oiObject n)
+oiHom (ZZ,ZZ) := List => (m,n) -> (
+    oiHom(oiObject m, oiObject n)
     )
 
 oiAlgebra = method()
@@ -545,7 +545,7 @@ OIModule OIObject := Module => (M,n) -> (
 	phi := M#generators;
 	psi := M#relations;
 	R := ring oiAlgebra M;
-	naturalBasis := flatten (M.widthList / (w -> sort OIHom(oiObject w,n)));
+	naturalBasis := flatten (M.widthList / (w -> sort oiHom(oiObject w,n)));
 	nthModule := R^(length naturalBasis);
 	relsmat := if psi =!= null then (psi n) else map(nthModule,R^0,0); 
 	relsmat = map(nthModule,target relsmat,id_(target relsmat))*relsmat;
@@ -578,8 +578,8 @@ inducedMorphism = method()
 -- P_n(b) <- P_n(a) (here, ep is a morphisms from [a] to [b])
 
 inducedMorphism (OIMorphism,ZZ) := Matrix => (ep,n) -> (
-    sourceBasis := sort OIHom(oiObject n, source ep);
-    targetBasis := sort OIHom(oiObject n, target ep);
+    sourceBasis := sort oiHom(oiObject n, source ep);
+    targetBasis := sort oiHom(oiObject n, target ep);
     matrixEntriesFunction := (i,j) -> (
 	if (ep sourceBasis_j == targetBasis_i) then (
 	    1
@@ -617,7 +617,7 @@ idOI = method()
 idOI(OIModule) := OIModuleMap => (M) -> (
     R := ring oiAlgebra M;
     l := for i from 0 to #M.widthList-1 list flatten for j from 0 to #M.widthList-1 list (
-	k := #OIHom(oiObject M.widthList#j, oiObject M.widthList#i);
+	k := #oiHom(oiObject M.widthList#j, oiObject M.widthList#i);
 	toList (k: if i==j then 1_R else 0_R)
 	);
     l = apply(l, L -> transpose matrix{L});    
@@ -644,7 +644,7 @@ OIModuleMap OIObject := matrix => (phi, obj) -> (
     widths := getWidthList N;
     imageGens := getImageGensList phi;
     for i from 0 to ((length widths)-1) when widths_i < n+1 do (
-	maps := sort OIHom(widths_i, n);
+	maps := sort oiHom(widths_i, n);
 	for j from 0 to ((length maps)-1) do (
 	   ep := maps_j;
 	   imageEpMatrix := M ep;
@@ -808,11 +808,11 @@ Node
 	    tau	epsilon
 	    epsilon 2
     	Text
-	    The collection of all OIMorphisms between two OIObjects can be found using OIHom
+	    The collection of all OIMorphisms between two OIObjects can be found using oiHom
 	Example
 	    sourceObj = oiObject 2;
 	    targetObj = oiObject 4;
-	    OIHom (sourceObj, targetObj)
+	    oiHom (sourceObj, targetObj)
         Text
 	    The net used to represent @ofClass OIMorphism@ is the strings representing the 
 	    images of the function, concatenated in order. This can lead to notational 
@@ -857,6 +857,29 @@ Node
 	    epsilon = oiMorphism({1,4,5}, 7)
 	    tau = oiMorphism({1,3,4,5,7,8,9})
 	
+Node
+    Key
+    	oiHom
+	(oiHom,OIObject,OIObject)
+	(oiHom,ZZ,ZZ)
+    Headline
+        Hom set for OI
+    Usage
+    	L = oiHom(S,T)
+    Inputs
+    	S:OIObject
+	T:OIObject
+    Outputs
+    	L:List
+	    of OIMorphisms
+    Description
+    	Text
+	    Returns a list of all morphisms between two objects in OI.
+	Example
+	    S = oiObject 2
+	    T = oiObject 4
+	    oiHom(S,T)
+	    oiHom(T,S)
 
 Node 
     Key
@@ -1040,6 +1063,74 @@ Node
 	    source phi
 	    target phi
 	    getImageGensList phi
+
+Node
+    Key
+    	idOI
+	(idOI,OIModule)
+    Headline
+        identity map for an OIModule
+    Usage
+    	f = idOI(M)
+    Inputs
+    	M:OIModule
+    Outputs
+    	f:OIModuleMap
+    Description
+    	Text
+	    Produces the identity map from an OIModule to itself.
+	Example
+	    A = oiAlgebra(ZZ/101[x,y,z])
+	    M = A^{2,3}
+	    idOI M
+
+Node
+    Key
+    	getWidthList
+	(getWidthList,OIModule)
+    Headline
+        generator widths of an OIModule
+    Usage
+    	L = getWidthList(M)
+    Inputs
+    	M:OIModule
+    Outputs
+    	L:List
+	    of nonnegative integer widths
+    Description
+    	Text
+	    Every finitely generated module over an OI-algebra A is a subquotient of
+	    a sum of principal projectives, P.  This method returns the widths of the 
+	    generators of P.
+	Example
+	    A = oiAlgebra(ZZ/101)
+	    M = A^{2,3}
+	    getWidthList M
+
+Node
+    Key
+    	getOIBasis
+	(getOIBasis,Module)
+    Headline
+        basis elements of a module from OI
+    Usage
+    	L = getOIBasis(M)
+    Inputs
+    	M:Module
+	    from OIModule
+    Outputs
+    	L:List
+	    of OIMorphisms
+    Description
+    	Text
+	    If M is a module created from a free OIModule applied to OIObject S,
+	    it is generated by OIMorphisms to S.  This method returns the
+	    list of those morphisms
+	Example
+	    A = oiAlgebra(ZZ)
+	    P = A^{3}
+	    M = P 4
+	    getOIBasis M
         
 ///
 end
@@ -1063,7 +1154,7 @@ OIMonomials m
 for i in m do print i_1
 ob1 = oiObject 3
 ob2 = oiObject 6
-OIHom(ob1, ob2)
+oiHom(ob1, ob2)
 ep = oiMorphism {1,2,4}
 tau  = oiMorphism {1,3,5,8}
 
@@ -1125,7 +1216,7 @@ getOIBasis(F 5)
 F tau
 -- you can look at the modules you get by applying F to the first few values:
 
-testList := OIHom(4,5)
+testList := oiHom(4,5)
 
 apply(testList, i -> F i)
 
