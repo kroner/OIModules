@@ -6,6 +6,18 @@ newPackage(
      Headline => "A package for regular languages and their Hilbert series",
      HomePage => "",
      Authors => {
+	{Name => "Nathan Fieldsteel",
+	    Email => "nathan.fieldsteel@uky.edu"},
+	{Name => "Tom Grubb",
+	    Email => "tgrubb@ucsd.edu"},
+	{Name => "Robert Krone",
+	    Email => "rckrone@ucdavis.edu"},
+	{Name => "Erica Musgrave",
+	    Email => "erica.musgrave@huskers.unl.edu"},
+	{Name => "Jonathan Niño",
+	    Email => "ninojonathan4@gmail.com"},
+	{Name => "Steven Sam",
+	    Email => "ssam@ucsd.edu"}
 	  },
      PackageImports => {
 	 "EquivariantGB",
@@ -235,7 +247,6 @@ hilbertSeries(Automaton) := o -> A -> (
     T := degreesRing R;
     T = frac(ZZ[gens T]);
     weights := apply(gens R, v -> T_(degree v));
-    print weights;
     automatonHS(A,weights)
     ) 
 
