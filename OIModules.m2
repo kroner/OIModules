@@ -1184,6 +1184,54 @@ Node
 
 Node
     Key
+    	gensMap
+	(gensMap,OIModule)
+    Headline
+        map whose image is M
+    Usage
+    	phi = gensMap(M)
+    Inputs
+    	M:OIModule
+    Outputs
+    	phi:OIModuleMap
+    Description
+    	Text
+	    Returns a map of OI-modules whose image is M.
+	Example
+	    A = oiAlgebra(ZZ)
+	    M = A^{3}
+	    gensMap M
+    SeeAlso
+        (generators,OIModule)
+
+Node
+    Key
+	(generators,OIModule)
+	(generators,OIModuleMap)
+    Usage
+    	F = generators(M)
+	F = generators(phi)
+    Inputs
+    	M:OIModule
+	    or OIModuleMap
+    Outputs
+    	F:List
+    Description
+    	Text
+	    Returns a list of the generators of M within a sum of principal projective
+	    OI-modules.  Each element of the list is a matrix representing an element
+	    of one of the modules produced by M.
+	    
+	    On a map of OI-modules, it returns generators of the image.
+	Example
+	    A = oiAlgebra(ZZ)
+	    M = A^{1,2}
+	    gens M
+    SeeAlso
+        gensMap
+	
+Node
+    Key
     	oigb
 	(oigb,OIModule)
     Headline
