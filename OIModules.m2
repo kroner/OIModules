@@ -48,11 +48,11 @@ export {
     "OILCM",
     "OIGroebner",
     "OIElement",
-    "OIMonomialtoMonomial",
     "OIMonomials",
     "OIMontoHilbert",
     "Hilb",
     "isOIMonomial",
+    "OIhs",
     "OIgb"
     }
 
@@ -735,6 +735,48 @@ OIModuleMap*OIModuleMap := OIModuleMap => (psi, phi) -> (
 	newVectors = append(newVectors, (psi widthsSource_i)*vectors_i) 
 	);    
     oiModuleMap(target psi, M, newVectors)
+    )
+
+gapList := m -> (
+    k := 0;
+    L := for i in source m list (
+	gap := m i - k - 1;
+	k = m i;
+	gap
+	);
+    append(L,(last target m) - k)
+    )
+
+cleanhs = (I,U) -> (
+    H := hilbertSeries I;
+    sub(value numerator H,matrix{{U_0}})/sub(value denominator H,matrix{{U_0}})
+    )
+
+OIhs = method()
+OIhs OIModule := M -> (
+    gensInit := apply(gens M, g -> first leadComponent g);
+    gensWidths := getWidthList (source gensMap M);
+    Mwidths := getWidthList M;
+    Mparts := new MutableHashTable;
+    for i from 0 to #gensWidths-1 do (
+	k := 0;
+	prt := -1;
+	while k <= gensInit#i do (
+	    prt = prt+1;
+	    k = k + binomial(gensWidths#i, Mwidths#prt);
+	    );
+	oimorph := (getOIBasis(M gensWidths#i))#(gensInit#i);
+	if not Mparts#?prt then Mparts#prt = {};
+	Mparts#prt = append(Mparts#prt, oimorph);
+	);
+    U := ZZ[local T];
+    sum for prt in keys Mparts list (
+	x := local x;
+	R := ZZ[x_0..x_(Mwidths#prt)];
+	mons := apply(Mparts#prt, m -> R_(gapList(m)));
+	h := cleanhs(ideal{0_R},U) - cleanhs(ideal mons,U);
+	(U_0)^(Mwidths#prt)*h
+	)
     )
 
 beginDocumentation()
