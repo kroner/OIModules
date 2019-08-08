@@ -541,34 +541,37 @@ OIModule ++ OIModule := OIModule => (M,N) -> (
     oiModule(A, getWidthList M | getWidthList N) 
     )
 
-OIModule OIObject := Module => (M,n) -> (
-    if M.cache #? n then M.cache # n
-    else (
-	phi := M#generators;
-	psi := M#relations;
-	R := ring oiAlgebra M;
-	naturalBasis := flatten (M.widthList / (w -> sort oiHom(oiObject w,n)));
-	nthModule := R^(length naturalBasis);
-	relsmat := if psi =!= null then (psi n) else map(nthModule,R^0,0); 
-	relsmat = map(nthModule,target relsmat,id_(target relsmat))*relsmat;
-        if phi =!= null then (
-	    gensmat := (phi n);
-	    gensmat = map(nthModule,target gensmat,id_(target gensmat))*gensmat;
-	    nthModule = subquotient(nthModule,gensmat,relsmat);
-	    ) else
-	nthModule = nthModule/image relsmat;
-	nthModule.cache#(symbol OIBasis) = naturalBasis;
-	M.cache#n = nthModule;
-	nthModule
-    	)
+retrieveModule = method()
+
+retrieveModule (OIModule, OIObject) := Module => (M,n) -> (
+    phi := M#generators;
+    psi := M#relations;
+    R := ring oiAlgebra M;
+    naturalBasis := flatten (M.widthList / (w -> sort oiHom(oiObject w,n)));
+    nthModule := R^(length naturalBasis);
+    relsmat := if psi =!= null then (psi n) else map(nthModule,R^0,0); 
+    relsmat = map(nthModule,target relsmat,id_(target relsmat))*relsmat;
+    if phi =!= null then (
+	gensmat := (phi n);
+	gensmat = map(nthModule,target gensmat,id_(target gensmat))*gensmat;
+	nthModule = subquotient(nthModule,gensmat,relsmat);
+	) else
+    nthModule = nthModule/image relsmat;
+    nthModule.cache#(symbol OIBasis) = naturalBasis;
+    M.cache#n = nthModule;
+    nthModule
     )
+
+OIModule OIObject := Module => (M,n) -> (
+    ((cacheValue n) (a -> retrieveModule(a,n)))  M
+    )
+
+OIModule ZZ := Module => (M,n) -> M (oiObject n)
 
 generators OIModule := List => o -> M -> (
     if M#generators =!= null then gens M#generators
     else gens idOI M
     )
-
-OIModule ZZ := Module => (M,n) -> M (oiObject n)
 
 OIModule OIMorphism := (Matrix) => (M,ep) -> (
     sourceModule := M source ep;
