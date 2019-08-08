@@ -388,6 +388,7 @@ oiMonomialsToHilbert = L ->(
 
 oiObject = method()
 oiObject ZZ := OIObject => n -> (
+    if n < 0 then error "can't make OIObject from negative integer";
     new OIObject from toList(1..n)
     )
 oiObject OIObject := OIObject => obj -> obj
@@ -427,7 +428,7 @@ net OIMorphism := (epsilon) -> (
 	    net vals_0
 	    )
     	else (
-    	    (fold(vals, (x,y) -> (toString x) | (toString y)))|","|toString(target epsilon)
+    	    (fold(vals, (x,y) -> (toString x) | (toString y)))
 	    )
 	)
     )
