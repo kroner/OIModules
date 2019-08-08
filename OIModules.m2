@@ -573,13 +573,19 @@ generators OIModule := List => o -> M -> (
     else gens idOI M
     )
 
-OIModule OIMorphism := (Matrix) => (M,ep) -> (
+retrieveMorphism = method()
+
+retrieveMorphism (OIModule, OIMorphism) := Matrix => (M,ep) -> (
     sourceModule := M source ep;
     targetModule := M target ep;
     summandMatrices := M#widthList / (w -> inducedMorphism(ep,w));
     integerMatrix := fold(summandMatrices, (a,b) -> a++b);
     ringMatrix := sub(integerMatrix, ring oiAlgebra M);
     map(targetModule, sourceModule, ringMatrix)
+    )
+
+OIModule OIMorphism := Matrix => (M,ep) -> (
+    ((cacheValue ep) (a -> retrieveMorphism(a,ep))) M
     )
 
 inducedMorphism = method()
