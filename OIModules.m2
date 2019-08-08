@@ -623,6 +623,7 @@ getOIBasis Module := List => (M) -> (
 oiModuleMap = method()
 oiModuleMap (OIModule, OIModule, List) := OIModuleMap => (M,N,l) -> (
     new OIModuleMap from {
+	cache => new MutableHashTable from {},
 	source => N,
 	target => M,
 	imageGensList => l 
@@ -646,9 +647,7 @@ generators OIModuleMap := List => o -> phi -> phi.imageGensList
 source OIModuleMap := phi -> phi#source
 target OIModuleMap := phi -> phi#target
 
-OIModuleMap ZZ := matrix => (phi, n) -> phi (oiObject n)
-
-OIModuleMap OIObject := matrix => (phi, obj) -> (
+retrieveMorphism (OIModuleMap, OIObject) := matrix => (phi, obj) -> (
     n := length obj;
     M := target phi;
     N := source phi;
@@ -661,16 +660,21 @@ OIModuleMap OIObject := matrix => (phi, obj) -> (
     for i from 0 to ((length widths)-1) when widths_i < n+1 do (
 	maps := sort oiHom(widths_i, n);
 	for j from 0 to ((length maps)-1) do (
-	   ep := maps_j;
-	   imageEpMatrix := M ep;
-	   m := map(source imageEpMatrix, target imageGens_i, id_(target imageGens_i));
-	   imageGenMatrix := imageEpMatrix*m*matrix(imageGens_i);
-	   vectors = append(vectors, flatten(entries(imageGenMatrix)));
-	   )	
+       	    ep := maps_j;
+	    imageEpMatrix := M ep;
+	    m := map(source imageEpMatrix, target imageGens_i, id_(target imageGens_i));
+	    imageGenMatrix := imageEpMatrix*m*matrix(imageGens_i);
+	    vectors = append(vectors, flatten(entries(imageGenMatrix)));
+	    )	
 	);
     transpose matrix(ring oiAlgebra M, vectors)
     )
 
+OIModuleMap OIObject := matrix => (phi, obj) -> (
+    ((cacheValue obj) (f -> retrieveMorphism(f,obj))) phi
+    )
+
+OIModuleMap ZZ := matrix => (phi, n) -> phi (oiObject n)
 
 image OIModuleMap := OIModule => (phi) -> (
     M := target phi;
